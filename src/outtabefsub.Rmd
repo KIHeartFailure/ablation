@@ -1,0 +1,90 @@
+```{r outtabefsub, cache=cacheon}
+survefsubfunc <- function(time, event, eventname) {
+  out <- data.frame(matrix(NA, ncol = 5, 1))
+
+  levsef <- levels(matchpop$shf_ef_cat)
+
+  out[1, 1] <- eventname
+  colnames(out) <- c("Outcome", levsef, "p-value interaction")
+
+  for (i in seq_along(levsef)) {
+
+    ## adjusted match
+    mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation * relevel(shf_ef_cat, ref = '", levsef[i], "') + (1 | par)")),
+      data = matchpop
+    )
+
+    se <- sqrt(vcov(mod)[1])
+
+    out[1, (i + 1)] <- paste0(
+      fn(exp(mod$coefficients[1]), dig = 2),
+      " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
+      "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
+      fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
+    )
+
+    if (i == 1) {
+      pint <- car::Anova(mod, type = "III", test.statistic = "Wald")
+
+      out[1, 5] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
+    }
+  }
+  return(out)
+}
+
+s1 <- survefsubfunc(
+  time = "sos_outtime_hosphf",
+  event = "sos_out_deathhosphf",
+  eventname = "All-cause mortality/first HF hospitalization"
+)
+
+s2 <- survefsubfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_death",
+  eventname = "All-cause mortality"
+)
+
+s3 <- survefsubfunc(
+  time = "sos_outtime_hosphf",
+  event = "sos_out_hosphf",
+  eventname = "First HF hospitalization"
+)
+
+s4 <- survefsubfunc(
+  time = "sos_outtime_hospstroketia",
+  event = "sos_out_hospstroketia",
+  eventname = "First TIA/Stroke hospitalization"
+)
+
+s5 <- survefsubfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_deathcv",
+  eventname = "CV mortality"
+)
+
+s6 <- survefsubfunc(
+  time = "sos_outtime_hospcv",
+  event = "sos_out_hospcv",
+  eventname = "First CV hospitalization"
+)
+
+s7 <- survefsubfunc(
+  time = "sos_outtime_hospany",
+  event = "sos_out_hospany",
+  eventname = "First all-cause hospitalization"
+)
+
+outall <- rbind(
+  s1, s2, s3, s4, s5, s6, s7
+)
+
+write.xlsx(outall, paste0("./output/tabs/outefsub_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+footnote(
+  default_kable(outall,
+    font_size = 6,
+    caption = "Association between ablation and outcomes in EF subgroups"
+  ),
+  general = "HR (95% CI), p-value"
+)
+```

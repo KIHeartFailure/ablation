@@ -1,0 +1,89 @@
+```{r tab1, cache=cacheon}
+
+# all pop
+tab1 <- print(CreateTableOne(
+  vars = tabvars,
+  data = pop,
+  strata = "ablation"
+),
+smd = TRUE,
+missing = TRUE,
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE
+)
+tab1 <- as_tibble(cbind(var = rownames(tab1), tab1)) %>%
+  select(var, Missing, `No`, `Yes`, SMD, p)
+
+# match pop
+tab1m <- print(CreateTableOne(
+  vars = tabvars,
+  data = matchpop,
+  strata = "ablation"
+),
+smd = TRUE,
+missing = TRUE,
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE
+)
+tab1m <- as_tibble(cbind(var = rownames(tab1m), tab1m)) %>%
+  select(var, `No`, `Yes`, SMD, p)
+
+
+tab1 <- bind_cols(tab1, tab1m %>% select(-var), .name_repair = "unique")
+
+tab1 <- tab1 %>%
+  # remove = Yes
+  mutate(
+    across(everything(), str_replace_all, fixed(" = Yes"), ""),
+    across(everything(), str_replace_all, fixed(" = "), " ")
+  )
+
+write.xlsx(tab1, paste0("./output/tabs/tab1_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+# footnotes
+tab1 <- tab1 %>%
+  mutate(
+    footnote1 = if_else(str_detect(var, "^scb_dispincome_cat2"), footnote_marker_symbol(1), ""),
+    footnote2 = if_else(str_detect(tab1$var, paste0("^", modvars, collapse = "|")), footnote_marker_symbol(2), "")
+  ) %>%
+  unite(footnote, starts_with("footnote"), sep = "") %>%
+  mutate(
+    # so no probs
+    var = sanitize_text(var),
+    var = paste0(var, footnote),
+
+    # space in Latex output (fix this other way?)
+    var = sub("  ", ". ", var)
+  ) %>%
+  select(-footnote)
+
+## fix in order to use escape = TRUE
+colnames(tab1) <- sanitize_text(c("Variable", "Missing (%)", rep(c("No ablation", "Ablation", "SMD", "p-value"), 2)))
+
+footnote(
+  default_kable(tab1,
+    font_size = 6,
+    caption = "Baseline characteristics by ablation",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    landscape() %>%
+    add_header_above(c(" " = 1, "Full cohort" = 5, "Matched cohort" = 4)),
+  general = c(
+    "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test.",
+    "SMD = Absolute standardized mean differences"
+  ),
+  symbol = c(
+    "Medium within index year",
+    "Included in propensity score/cox regression models"
+  )
+)
+```

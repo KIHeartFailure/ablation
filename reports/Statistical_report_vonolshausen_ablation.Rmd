@@ -1,0 +1,205 @@
+---
+title: 'Statistical report: Ablation in HF'
+subtitle: 'DRAFT'
+author: 'Statistician: Lina Benson'
+  
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    fig_caption: yes
+    fig_height: 7
+    fig_width: 7
+    number_sections: yes
+link-citations: yes
+bibliography: references.bib
+nocite: '@*'
+urlcolor: blue
+linkcolor: black
+header-includes:
+   - \usepackage{draftwatermark}
+---
+
+\newpage 
+\tableofcontents 
+\listoftables
+\listoffigures
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, include = TRUE, comment = "",
+  warning = FALSE, message = FALSE, fig.pos = "H",
+  fig.path = "../output/figs/"
+)
+options(knitr.kable.NA = "")
+```
+
+```{r adjust_directory_if_needed, include=FALSE}
+# Uncomment lines below if rmd file is placed in a subdirectory
+knitr::opts_knit$set(root.dir = normalizePath("../"))
+```
+
+```{r load_project}
+# 1. Set options in config/global.dcf
+# 2. Load packages listed in config/global.dcf
+# 3. Import functions and code in lib directory
+
+ProjectTemplate::reload.project()
+
+cacheon <- TRUE
+```             
+
+# Data handling
+
+## Data source
+
+SHFDB3, https://kiheartfailure.github.io/shfdb3/, v 3.2.4. 
+
+## Inclusion/exclusion
+
+```{r flowcase}
+default_kable(flowcase, caption = "Flowchart for cases")
+```
+
+```{r flowcontrol}
+default_kable(flowcontrol, caption = "Flowchart for controls")
+```
+
+The index date is defined as date of ablation for cases and index date (visit date/date of discharge) in SwedeHF for controls. 
+
+First patient in: `r min(pop$indexdtm)` and last patient in: `r max(pop$indexdtm)`.  
+
+The median age (IQR) is `r pop %>% summarise(med = fn(median(shf_age), dig = 1),
+                                             q1 = fn(quantile(shf_age, probs = 0.25), dig = 1),
+                                             q3 = fn(quantile(shf_age, probs = 0.75), dig = 1)) %>%
+                                   mutate(out = paste0(med, " (", q1, "-", q3, ")")) %>%
+                                   pull(out)` and 
+`r pop %>% count(shf_sex) %>%
+  mutate(perc = fn(n / sum(n) * 100, 1)) %>%
+  filter(shf_sex == "Female") %>%
+  pull(perc)`% females.    
+
+## Created variables 
+
+```{r ddr}
+default_kable(metalm, caption = "Medications from DDR")
+```
+
+```{r npr}
+default_kable(metaout, caption = "Comorbidities and outcomes from Patient- and Cause of Death Registry")
+```
+
+\clearpage 
+
+# Statistical analysis 
+
+## General
+
+All analyses were performed using `r sessionInfo()$R.version$version.string` [@r]. 
+The level of significance is set to 5%, two-sided. No adjustment for multiple 
+comparisons were made and therefore the results should be viewed with some care.
+
+## Missing data
+
+There was a small amount of missing data and therefore no imputation was performed.
+
+However, there was approx 2% missing for education, distributed unevenly (2% for controls and 10% for cases). 
+QUESTION: Suggest either 1) exclude education from model 2) assume a specific education level for missing/set missing to additional level of education 3) Sensitivity analysis. 
+
+## Propensity scores and matching
+
+A propensity score for ablation was estimated for each patient with 
+logistic regression using the variables 
+indicated in Table \ref{tab:tab1}. 1:2 matching without replacement [@match] 
+was thereafter performed, where matching was 
+allowed if the propensity score differed by 0.01 or less. The ability of the 
+propensity score matching to balance the baseline characteristics was assessed by 
+standardized mean differences (SMD), where SMD |<0.1| was deemed 
+acceptable to assume similarity between groups.  
+
+1:2 has deemed the best option when taking into account the number of patients 
+retained and balance between groups. Other matching ratios: `r matchingn`.
+
+## Baseline characteristics
+
+QUESTION: Do you want any more treatments or comorbidities in the baseline tab and/or model?
+
+```{r, child = "../src/tab1.Rmd"}
+
+```
+
+## Outcome analysis
+
+Data were censored at 2019-12-31 or death/emigration. QUESTION: Should the outcomes be cut at a certain time point? For example 5 years?
+
+Outcomes including all-cause mortality were presented with Kaplan-Meier curves and other outcomes 
+with cumulative incidence curves treating death as a competing event. 
+
+Cox proportional hazards regressions were 
+used to model the time to event, partly crude and partly adjusted for variables indicated in 
+Table \ref{tab:tab1}. The variables were selected based on clinical relevance. 
+Adjustment was performed partly by including the variables as individual covariates directly 
+in the model and partly using the propensity score matched cohort. 
+In the latter a frailty term was included to model the dependence between matched pairs. 
+
+As a consistency analysis outcomes not including all-cause mortality were modelled using a sub-distributional hazards model [@fg] 
+where death was treated as a competing event. 
+
+The proportional hazards assumption was investigated using the scaled Schoenfeld 
+residuals (cox.zph in [@survival-package]) for the primary outcome. 
+Possible outliers were visually inspected by plotting the dfbetas. 
+=> XXXX. 
+
+The median (min-max) follow-up was 
+`r pop %>% summarise(med = fn(median(sos_outtime_death / 365.25), dig = 1),
+                                             min = fn(min(sos_outtime_death / 365.25), dig = 1),
+                                             max = fn(max(sos_outtime_death / 365.25), dig = 1)) %>%
+                                   mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
+                                   pull(out)` years for a total of 
+                                   `r pop %>% summarise(sumpy = fn(sum(sos_outtime_death) / 365.25, dig = 0)) %>%
+                                   pull(sumpy)` patient-years of follow-up.
+
+
+```{r, child = "../src/km.Rmd"}
+
+```
+
+```{r, child = "../src/outtab.Rmd"}
+
+```
+
+\clearpage
+\newpage
+
+### EF subgroups
+
+The association between ablation and the outcomes in EF subgroups were 
+investigated using Cox proportional hazards regressions in the matched cohort 
+where the interaction between ablation and EF was included, thereby giving the interpretation of a 
+subgroup analysis but with the additional advantage of also being able to test 
+for differences in effect between EF subgroups. 
+
+```{r, child = "../src/outtabefsub.Rmd"}
+
+```
+
+\clearpage
+\newpage
+
+# Reproducibility
+
+## R session information {#sessioninfo}
+
+```{r sessinfo}
+sessionInfo()
+```
+
+## R code
+
+The R code for all data handling and statistical analyses are found: 
+https://github.com/KIHeartFailure/ablation. On publication
+the repository will be made public so as to 
+link to it from the resulting article for increased transparency and code sharing.
+No data or output is stored in the repository. 
+
+# References
