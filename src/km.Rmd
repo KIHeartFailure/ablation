@@ -8,7 +8,6 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     data = pop
   ))
   cp <- paste0(
-    "Crude HR (95% CI), p: ",
     fn(cmod$conf.int[1, 1], dig = 2),
     " (", fn(cmod$conf.int[1, 3], dig = 2),
     "-", fn(cmod$conf.int[1, 4], dig = 2), "), ",
@@ -23,7 +22,6 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
   se <- sqrt(vcov(mod)[1])
 
   ap <- paste0(
-    "Adjusted HR (95% CI), p: ",
     fn(exp(mod$coefficients[1]), dig = 2),
     " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
     "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
@@ -53,7 +51,7 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     )
 
     # c(bottom, left, top, right)
-    par(mar = c(8, 8.5, 0.5, 7) + 0.1)
+    par(mar = c(8, 8.7, 0.5, 7.7) + 0.1)
 
     plot(fit[1:2],
       ylab = eventname,
@@ -75,7 +73,7 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     )
   } else {
     # c(bottom, left, top, right)
-    par(mar = c(8, 8.5, 0.5, 7) + 0.1)
+    par(mar = c(8, 8.7, 0.5, 7.7) + 0.1)
 
     plots <- plot(fits,
       fun = "event",
@@ -120,7 +118,7 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
 
   ylabs <- bind_cols(
     ypos = c(ypos + yposplus),
-    ytext = c("No ablation full", "Ablation", "No ablation match")
+    ytext = c("No ablation all", "Ablation", "No ablation matched")
   )
 
   mtext(
@@ -131,11 +129,11 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     las = 1
   )
 
-  mtext("No. at risk", side = 1, line = 3, at = -790, adj = 0, cex = 1)
-  mtext("No ablation full", side = 1, line = 4, at = -750, adj = 0, cex = 1)
-  mtext("Ablation full", side = 1, line = 5, at = -750, adj = 0, cex = 1)
-  mtext("No ablation match", side = 1, line = 6, at = -750, adj = 0, cex = 1)
-  mtext("Ablation match", side = 1, line = 7, at = -750, adj = 0, cex = 1)
+  mtext("No. at risk", side = 1, line = 3, at = -860, adj = 0, cex = 1, font = 2)
+  mtext("No ablation all", side = 1, line = 4, at = -860, adj = 0, cex = 1)
+  mtext("Ablation all", side = 1, line = 5, at = -860, adj = 0, cex = 1)
+  mtext("No ablation matched", side = 1, line = 6, at = -860, adj = 0, cex = 1)
+  mtext("Ablation matched", side = 1, line = 7, at = -860, adj = 0, cex = 1)
 
   nrisk <- summary(fits, seq(0, 5, 1) * 365)$n.risk
   nriskm <- summary(fitsm, seq(0, 5, 1) * 365)$n.risk
@@ -145,8 +143,12 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
   axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[1:6], line = 5, tick = FALSE, cex.axis = 1)
   axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[7:12], line = 6, tick = FALSE, cex.axis = 1)
 
-  text(0 * 365, 0.95, cp, pos = 4)
-  text(0 * 365, 0.90, ap, pos = 4)
+  text(0, 0.90, "Crude:", pos = 4)
+  text(0, 0.85, "Adjusted:", pos = 4)
+
+  text(380, 0.95, "HR (95% CI), p-value", pos = 4)
+  text(380, 0.90, cp, pos = 4)
+  text(380, 0.85, ap, pos = 4)
 }
 ```
 
@@ -184,7 +186,7 @@ kmfunc(
   event = "sos_out_hospstroketia",
   eventcr = "sos_out_hospstroketia_cr",
   eventname = "First TIA/Stroke hospitalization (%)",
-  yposplus = c(0, 0, 0) # no all, yes, no matched
+  yposplus = c(0, -0.01, 0.01) # no all, yes, no matched
 )
 ```
 
@@ -194,7 +196,7 @@ kmfunc(
   event = "sos_out_deathcv",
   eventcr = "sos_out_deathcv_cr",
   eventname = "CV mortality (%)",
-  yposplus = c(0, -0.00, 0.00) # no all, yes, no matched
+  yposplus = c(0, 0, 0) # no all, yes, no matched
 )
 ```
 
@@ -204,7 +206,7 @@ kmfunc(
   event = "sos_out_hospcv",
   eventcr = "sos_out_hospcv_cr",
   eventname = "First CV hospitalization (%)",
-  yposplus = c(0.005, 0, -0.005) # no all, yes, no matched
+  yposplus = c(-0.01, 0, 0.01) # no all, yes, no matched
 )
 ```
 
@@ -214,6 +216,6 @@ kmfunc(
   event = "sos_out_hospany",
   eventcr = "sos_out_hospany_cr",
   eventname = "First all-cause hospitalization (%)",
-  yposplus = c(0, -0.01, 0.01)
+  yposplus = c(0, 0, 0)
 )
 ```

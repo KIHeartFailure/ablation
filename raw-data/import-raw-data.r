@@ -12,7 +12,7 @@ load(paste0(sospath, "RData/lm.RData"))
 # Select ATC codes --------------------------------------------------------
 
 lmsel <- lm %>%
-  mutate(atcneed = stringr::str_detect(ATC, "^C0")) %>%
+  mutate(atcneed = stringr::str_detect(ATC, "^(C0|B01A|C10|A10B)")) %>%
   filter(
     ANTAL >= 0,
     # AR >= 2013,

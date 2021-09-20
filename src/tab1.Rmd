@@ -52,7 +52,8 @@ write.xlsx(tab1, paste0("./output/tabs/tab1_", Sys.Date(), ".xlsx"), rowNames = 
 tab1 <- tab1 %>%
   mutate(
     footnote1 = if_else(str_detect(var, "^scb_dispincome_cat2"), footnote_marker_symbol(1), ""),
-    footnote2 = if_else(str_detect(tab1$var, paste0("^", modvars, collapse = "|")), footnote_marker_symbol(2), "")
+    footnote1 = if_else(str_detect(var, "^sos_comdur_af"), footnote_marker_symbol(2), ""),
+    footnote2 = if_else(str_detect(tab1$var, paste0("^", modvars, collapse = "|")), footnote_marker_symbol(3), "")
   ) %>%
   unite(footnote, starts_with("footnote"), sep = "") %>%
   mutate(
@@ -76,13 +77,14 @@ footnote(
     escape = FALSE
   ) %>%
     landscape() %>%
-    add_header_above(c(" " = 1, "Full cohort" = 5, "Matched cohort" = 4)),
+    add_header_above(c(" " = 1, "All" = 5, "Matched" = 4)),
   general = c(
     "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test.",
     "SMD = Absolute standardized mean differences"
   ),
   symbol = c(
     "Medium within index year",
+    "Within 9 years prior to index",
     "Included in propensity score/cox regression models"
   )
 )

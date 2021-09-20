@@ -12,7 +12,6 @@ tabvars <- c(
 
   # socec
   "scb_education",
-  "scb_education_mis",
   "scb_child",
   "scb_famtype",
   "scb_dispincome_cat2",
@@ -32,24 +31,31 @@ tabvars <- c(
   "sos_com_peripheralartery",
   "sos_com_cancer3y",
   "sos_com_bleed",
+  "sos_com_renal",
 
   # treatments
   "ddr_aad",
   "ddr_ratecontrol",
   "ddr_bbl",
-  "ddr_digoxin"
+  "ddr_digoxin",
+  "ddr_rasiarni",
+  "ddr_diuretics",
+  "ddr_mra",
+  "ddr_antiplatlet",
+  "ddr_anticoagulant",
+  "ddr_lipidlowering",
+  "ddr_sglt2i_glp1a"
 )
 
 # vars fox log reg and cox reg
 tabvars_not_in_mod <- c(
   "sos_com_afparoxysmal",
   "sos_com_afpersistent",
-  # "sos_comdur_af",
-
-  "scb_education",
 
   "chadsvasc",
   "chadsvasc_cat"
 )
 
+nsvars <- c("shf_age", "indexyear", "sos_comdur_af")
 modvars <- c(tabvars[!(tabvars %in% tabvars_not_in_mod)])
+modvarsns <- if_else(modvars %in% nsvars, paste0("ns(", modvars, ", df = 4)"), modvars)

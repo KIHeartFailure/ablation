@@ -13,9 +13,9 @@ pop <- pop %>%
     labels = c("HFrEF", "HFmrEF", "HFpEF"),
     levels = 1:3
     ),
-
-    # education extra missing cat
-    scb_education_mis = if_else(is.na(scb_education), "Missing", scb_education),
+    
+    ddr_rasiarni = factor(case_when(ddr_acei == "Yes" | ddr_arb == "Yes" | ddr_arni == "Yes" ~ 1, 
+                         TRUE ~ 0), levels = 0:1, labels = c("No", "Yes")),
 
     # chadsvasc
     chadsvasc = 1 + # hf

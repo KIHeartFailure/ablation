@@ -1,3 +1,5 @@
+
+# put data together
 pop <- bind_rows(
   ablationpop %>%
     mutate(
@@ -26,6 +28,8 @@ pop <- bind_rows(
 #                  by = "LopNr")
 
 
+# migration
+
 migration <- inner_join(pop %>%
   select(LopNr, indexdtm),
 migration %>%
@@ -46,6 +50,8 @@ pop <- left_join(pop,
   migration,
   by = c("LopNr", "indexdtm")
 )
+
+# death
 
 dors <- bind_rows(
   dors,
@@ -71,6 +77,6 @@ pop <- pop %>%
     censdtm = coalesce(
       pmin(sos_deathdtm, tmp_migrationdtm, na.rm = TRUE),
       ymd("2019-12-31")
-    )
-  ) %>%
-  filter(censdtm >= indexdtm)
+    ),
+    censdtm = if_else(ablation == "No", pmin(censdtm, sos_ablationdtm - 1, na.rm = TRUE), censdtm)
+  )

@@ -49,6 +49,24 @@ pop <- create_sosvar(
 
 pop <- create_sosvar(
   type = "com",
+  name = "renal",
+  sosdata = patreg,
+  cohortdata = pop,
+  patid = LopNr,
+  indexdate = indexdtm,
+  sosdate = INDATUM,
+  diavar = DIA_all,
+  opvar = OP_all,
+  comduration = TRUE,
+  diakod = " N1[7-9]| Z491| Z492",
+  opkod = " KAS00| KAS10| KAS20| DR014| DR015| DR016| DR020| DR012| DR013| DR023| DR024| TJA33| TJA35",
+  valsclass = "fac",
+  stoptime = -5 * 365.25,
+  warnings = TRUE
+)
+
+pop <- create_sosvar(
+  type = "com",
   name = "hypertension",
   sosdata = patreg,
   cohortdata = pop,
@@ -296,3 +314,12 @@ pop <- create_deathvar(
   warnings = FALSE,
   meta_pos = "ULORSAK"
 )
+
+# cut times at 5 years
+
+pop <- cut_surv(pop, sos_out_death, sos_outtime_death, floor(365.25 * 5), rename = "5y", cuttime = FALSE)
+pop <- cut_surv(pop, sos_out_hosphf, sos_outtime_hosphf, floor(365.25 * 5), rename = "5y")
+pop <- cut_surv(pop, sos_out_hospstroketia, sos_outtime_hospstroketia, floor(365.25 * 5), rename = "5y")
+pop <- cut_surv(pop, sos_out_deathcv, sos_outtime_death, floor(365.25 * 5), rename = "5y")
+pop <- cut_surv(pop, sos_out_hospcv, sos_outtime_hospcv, floor(365.25 * 5), rename = "5y")
+pop <- cut_surv(pop, sos_out_hospany, sos_outtime_hospany, floor(365.25 * 5), rename = "5y")

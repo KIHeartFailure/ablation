@@ -16,10 +16,10 @@ flowcontrol <- rbind(flowcontrol, c("NPR post with I48 (any position) within 5 y
 
 rsdata <- left_join(rsdata,
   ablationpop %>%
-    select(LopNr, shf_indexdtm, sos_ablationdtm),
-  by = c("LopNr", "shf_indexdtm")
+    select(LopNr, sos_ablationdtm),
+  by = c("LopNr")
 ) %>%
-  filter(is.na(sos_ablationdtm))
+  filter(is.na(sos_ablationdtm) | shf_indexdtm < sos_ablationdtm)
 flowcontrol <- rbind(flowcontrol, c("No previous ablation (defined as a case)", nrow(rsdata)))
 
 rsdata <- rsdata %>%

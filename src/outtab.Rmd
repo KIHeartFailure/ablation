@@ -48,9 +48,9 @@ survfunc <- function(time, event, eventcr = NULL, eventname) {
   ))
 
   ## adjusted covs
-  out[3, 2] <- "Adjusted covariates HR (95% CI), p-value"
+  out[3, 2] <- "Adjusted individual covariates HR (95% CI), p-value"
 
-  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + ", paste(modvars, collapse = " + "))),
+  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + ", paste(modvarsns, collapse = " + "))),
     data = pop
   ))
 

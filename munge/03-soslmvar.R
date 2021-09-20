@@ -94,6 +94,15 @@ lmtreats(atc = "^(C01BD07|C01BC04|C07AA|C01BD01|C01BA03|C01BC03)", treatname = "
 lmtreats(atc = "^(C08DA01|C08DB01)", treatname = "ratecontrol")
 lmtreats(atc = "^(C07A)", treatname = "bbl")
 lmtreats(atc = "^(C01AA05)", treatname = "digoxin")
+lmtreats("^(C09A|C09B)", "acei")
+lmtreats("^(C09C|C09D(?!X04))", "arb")
+lmtreats("^C09DX04", "arni")
+lmtreats("^(C03(?!DA)|C07B|C07C|C07D|C08GA|C09BA|C09DA|C09DX01)", "diuretics")
+lmtreats("^C03DA", "mra")
+lmtreats("^B01AC", "antiplatlet")
+lmtreats("^(B01A(?!C))", "anticoagulant")
+lmtreats("^C10", "lipidlowering")
+lmtreats("^(A10BK0[1-6]|A10BD15|A10BD16|A10BD19|A10BD20|A10BD21|A10BD23|A10BD24|A10BD25|A10BX09|A10BX11|A10BX12|A10BJ|A10BX04|A10BX07|A10BX10|A10BX13|A10BX14)", "sglt2i_glp1a")
 
 colnames(metalm) <- c("Variable", "ATC")
 metalm <- metalm %>%

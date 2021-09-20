@@ -10,6 +10,7 @@ output:
     fig_height: 7
     fig_width: 7
     number_sections: yes
+    extra_dependencies: ["flafter"]
 link-citations: yes
 bibliography: references.bib
 nocite: '@*'
@@ -29,6 +30,7 @@ header-includes:
 knitr::opts_chunk$set(
   echo = FALSE, include = TRUE, comment = "",
   warning = FALSE, message = FALSE, fig.pos = "H",
+  out.extra = "",
   fig.path = "../output/figs/"
 )
 options(knitr.kable.NA = "")
@@ -89,7 +91,7 @@ default_kable(metalm, caption = "Medications from DDR")
 default_kable(metaout, caption = "Comorbidities and outcomes from Patient- and Cause of Death Registry")
 ```
 
-\clearpage 
+\newpage
 
 # Statistical analysis 
 
@@ -97,20 +99,27 @@ default_kable(metaout, caption = "Comorbidities and outcomes from Patient- and C
 
 All analyses were performed using `r sessionInfo()$R.version$version.string` [@r]. 
 The level of significance is set to 5%, two-sided. No adjustment for multiple 
-comparisons were made and therefore the results should be viewed with some care.
+comparisons were made and therefore the results should be viewed with care.
 
 ## Missing data
 
-There was a small amount of missing data and therefore no imputation was performed.
-
-However, there was approx 2% missing for education, distributed unevenly (2% for controls and 10% for cases). 
-QUESTION: Suggest either 1) exclude education from model 2) assume a specific education level for missing/set missing to additional level of education 3) Sensitivity analysis. 
+The loss of patients due to missing data for the variables included in the models was small, `r paste0(pop %>% 
+         mutate(anyna = factor(if_else(rowSums(is.na(select(., !!!syms(modvars)))) > 0, "Yes", "No"))) %>%
+         group_by(ablation) %>%
+         count(anyna, .drop = FALSE) %>%
+         mutate(p = fn(n / sum(n) * 100, 1), 
+                np = paste0(n, " (", p, "%)")) %>% 
+         ungroup() %>%
+         filter(anyna == "Yes") %>% 
+         pull(np), collapse = ", ")` 
+         for no ablation and ablation group respectively, and therefore no imputation was performed.
 
 ## Propensity scores and matching
 
 A propensity score for ablation was estimated for each patient with 
 logistic regression using the variables 
-indicated in Table \ref{tab:tab1}. 1:2 matching without replacement [@match] 
+indicated in Table \ref{tab:tab1}, where `r paste0(nsvars, collapse = ", ")` 
+were modelled using cubic splines with 4 degrees of freedom. 1:2 matching without replacement [@match] 
 was thereafter performed, where matching was 
 allowed if the propensity score differed by 0.01 or less. The ability of the 
 propensity score matching to balance the baseline characteristics was assessed by 
@@ -122,15 +131,13 @@ retained and balance between groups. Other matching ratios: `r matchingn`.
 
 ## Baseline characteristics
 
-QUESTION: Do you want any more treatments or comorbidities in the baseline tab and/or model?
-
 ```{r, child = "../src/tab1.Rmd"}
 
 ```
 
-## Outcome analysis
+## Assocations with outcomes
 
-Data were censored at 2019-12-31 or death/emigration. QUESTION: Should the outcomes be cut at a certain time point? For example 5 years?
+Data were censored at 2019-12-31, death, emigration, 5 years after index, or, for the controls, ablation for AF. 
 
 Outcomes including all-cause mortality were presented with Kaplan-Meier curves and other outcomes 
 with cumulative incidence curves treating death as a competing event. 
@@ -139,16 +146,15 @@ Cox proportional hazards regressions were
 used to model the time to event, partly crude and partly adjusted for variables indicated in 
 Table \ref{tab:tab1}. The variables were selected based on clinical relevance. 
 Adjustment was performed partly by including the variables as individual covariates directly 
-in the model and partly using the propensity score matched cohort. 
+in the model, where `r paste0(nsvars, collapse = ", ")` 
+were modelled using cubic splines with 4 degrees of freedom, and partly using the propensity score matched cohort. 
 In the latter a frailty term was included to model the dependence between matched pairs. 
 
-As a consistency analysis outcomes not including all-cause mortality were modelled using a sub-distributional hazards model [@fg] 
+As a consistency analysis, outcomes not including all-cause mortality were modelled using a sub-distributional hazards model [@fg] 
 where death was treated as a competing event. 
 
 The proportional hazards assumption was investigated using the scaled Schoenfeld 
-residuals (cox.zph in [@survival-package]) for the primary outcome. 
-Possible outliers were visually inspected by plotting the dfbetas. 
-=> XXXX. 
+residuals (cox.zph in [@survival-package]) and was for all outcomes deemed to be fulfilled for ablation. 
 
 The median (min-max) follow-up was 
 `r pop %>% summarise(med = fn(median(sos_outtime_death / 365.25), dig = 1),
@@ -168,7 +174,6 @@ The median (min-max) follow-up was
 
 ```
 
-\clearpage
 \newpage
 
 ### EF subgroups
@@ -182,6 +187,16 @@ for differences in effect between EF subgroups.
 ```{r, child = "../src/outtabefsub.Rmd"}
 
 ```
+
+### Residual confounding
+
+In order to assess how robust the association between ablation and the primary outcome, all-cause-mortality/first HFH, is to residual confounding the E-value was calculated [@evalue]. The E-value is interpreted as the minimum Risk Ratio that an unmeasured confounder would need to have with both ablation and all-cause-mortality/first HFH, conditional on the variables currently adjusted for in the model, to fully eliminate the association between ablation and all-cause-mortality/first HFH.  
+
+```{r, child = "../src/evalue.Rmd"}
+
+```
+
+See Table \ref{tab:evalue2} in order to compare the magnitude of the E-value within the context of the study [@evalue2]. 
 
 \clearpage
 \newpage

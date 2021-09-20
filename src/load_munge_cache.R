@@ -15,6 +15,8 @@ ProjectTemplate::reload.project(
 
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("modvars")
+ProjectTemplate::cache("nsvars")
+ProjectTemplate::cache("modvarsns")
 
 ProjectTemplate::cache("flowcase")
 ProjectTemplate::cache("flowcontrol")
