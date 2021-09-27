@@ -57,7 +57,6 @@ pop <- create_sosvar(
   sosdate = INDATUM,
   diavar = DIA_all,
   opvar = OP_all,
-  comduration = TRUE,
   diakod = " N1[7-9]| Z491| Z492",
   opkod = " KAS00| KAS10| KAS20| DR014| DR015| DR016| DR020| DR012| DR013| DR023| DR024| TJA33| TJA35",
   valsclass = "fac",
@@ -257,6 +256,21 @@ pop <- create_sosvar(
   sosdate = INDATUM,
   diavar = HDIA,
   type = "out",
+  name = "nohosphf",
+  noof = TRUE,
+  diakod = " I110| I130| I132| I255| I420| I423| I425| I426| I427| I428| I429| I43| I50| J81| K761| R57",
+  censdate = censdtm,
+  warnings = FALSE
+)
+
+pop <- create_sosvar(
+  sosdata = patreg %>% filter(sos_source == "sv"),
+  cohortdata = pop,
+  patid = LopNr,
+  indexdate = indexdtm,
+  sosdate = INDATUM,
+  diavar = HDIA,
+  type = "out",
   name = "hospany",
   diakod = " ",
   censdate = censdtm,
@@ -317,9 +331,9 @@ pop <- create_deathvar(
 
 # cut times at 5 years
 
-pop <- cut_surv(pop, sos_out_death, sos_outtime_death, floor(365.25 * 5), rename = "5y", cuttime = FALSE)
-pop <- cut_surv(pop, sos_out_hosphf, sos_outtime_hosphf, floor(365.25 * 5), rename = "5y")
-pop <- cut_surv(pop, sos_out_hospstroketia, sos_outtime_hospstroketia, floor(365.25 * 5), rename = "5y")
-pop <- cut_surv(pop, sos_out_deathcv, sos_outtime_death, floor(365.25 * 5), rename = "5y")
-pop <- cut_surv(pop, sos_out_hospcv, sos_outtime_hospcv, floor(365.25 * 5), rename = "5y")
-pop <- cut_surv(pop, sos_out_hospany, sos_outtime_hospany, floor(365.25 * 5), rename = "5y")
+#pop <- cut_surv(pop, sos_out_death, sos_outtime_death, floor(365.25 * 5), rename = "5y", cuttime = FALSE)
+#pop <- cut_surv(pop, sos_out_hosphf, sos_outtime_hosphf, floor(365.25 * 5), rename = "5y")
+#pop <- cut_surv(pop, sos_out_hospstroketia, sos_outtime_hospstroketia, floor(365.25 * 5), rename = "5y")
+#pop <- cut_surv(pop, sos_out_deathcv, sos_outtime_death, floor(365.25 * 5), rename = "5y")
+#pop <- cut_surv(pop, sos_out_hospcv, sos_outtime_hospcv, floor(365.25 * 5), rename = "5y")
+#pop <- cut_surv(pop, sos_out_hospany, sos_outtime_hospany, floor(365.25 * 5), rename = "5y")

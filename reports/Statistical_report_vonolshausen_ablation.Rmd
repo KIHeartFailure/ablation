@@ -10,7 +10,6 @@ output:
     fig_height: 7
     fig_width: 7
     number_sections: yes
-    extra_dependencies: ["flafter"]
 link-citations: yes
 bibliography: references.bib
 nocite: '@*'
@@ -118,8 +117,7 @@ The loss of patients due to missing data for the variables included in the model
 
 A propensity score for ablation was estimated for each patient with 
 logistic regression using the variables 
-indicated in Table \ref{tab:tab1}, where `r paste0(nsvars, collapse = ", ")` 
-were modelled using cubic splines with 4 degrees of freedom. 1:2 matching without replacement [@match] 
+indicated in Table \ref{tab:tab1}. 1:2 matching without replacement [@match] 
 was thereafter performed, where matching was 
 allowed if the propensity score differed by 0.01 or less. The ability of the 
 propensity score matching to balance the baseline characteristics was assessed by 
@@ -137,24 +135,36 @@ retained and balance between groups. Other matching ratios: `r matchingn`.
 
 ## Assocations with outcomes
 
-Data were censored at 2019-12-31, death, emigration, 5 years after index, or, for the controls, ablation for AF. 
+Data were censored at 2019-12-31, death, emigration, or, for the controls, ablation for AF. 
 
-Outcomes including all-cause mortality were presented with Kaplan-Meier curves and other outcomes 
-with cumulative incidence curves treating death as a competing event. 
+Time to first events were presented with Kaplan-Meier curves for outcomes including all-cause mortality 
+curves and cumulative incidence curves treating death as a competing event for other outcomes. 
 
 Cox proportional hazards regressions were 
-used to model the time to event, partly crude and partly adjusted for variables indicated in 
+used to model the time to first event, partly crude and partly adjusted for variables indicated in 
 Table \ref{tab:tab1}. The variables were selected based on clinical relevance. 
 Adjustment was performed partly by including the variables as individual covariates directly 
-in the model, where `r paste0(nsvars, collapse = ", ")` 
-were modelled using cubic splines with 4 degrees of freedom, and partly using the propensity score matched cohort. 
+in the model, and partly using the propensity score matched cohort. 
 In the latter a frailty term was included to model the dependence between matched pairs. 
 
-As a consistency analysis, outcomes not including all-cause mortality were modelled using a sub-distributional hazards model [@fg] 
+As a consistency analysis, outcomes not including all-cause mortality were modelled 
+using a sub-distributional hazards model [@fg] 
 where death was treated as a competing event. 
+
+Repeated events were model using a negative binomial generalized linear model 
+including the log of time as an offset in the model, crude and adjusted as above. 
+For the matched data a generalized linear mixed-effects model (GLMMM) for the negative binomial family 
+was used in order to incorporate matched pairs as a random effect. 
+
+### Assumptions
 
 The proportional hazards assumption was investigated using the scaled Schoenfeld 
 residuals (cox.zph in [@survival-package]) and was for all outcomes deemed to be fulfilled for ablation. 
+Multicollinearity was investigated with the variance inflation factor 
+and linearity in relation to the outcome for the continuous variables with the martingale residuals, 
+which led to sos_comdur_af being categorized. 
+
+### Results
 
 The median (min-max) follow-up was 
 `r pop %>% summarise(med = fn(median(sos_outtime_death / 365.25), dig = 1),
@@ -179,9 +189,10 @@ The median (min-max) follow-up was
 ### EF subgroups
 
 The association between ablation and the outcomes in EF subgroups were 
-investigated using Cox proportional hazards regressions in the matched cohort 
-where the interaction between ablation and EF was included, thereby giving the interpretation of a 
-subgroup analysis but with the additional advantage of also being able to test 
+investigated using Cox proportional hazards regressions/negative binomial regressions 
+as above in the matched cohort where the interaction between ablation and EF was 
+included, thereby giving the interpretation of a subgroup analysis but with the 
+additional advantage of also being able to test 
 for differences in effect between EF subgroups. 
 
 ```{r, child = "../src/outtabefsub.Rmd"}
@@ -190,13 +201,19 @@ for differences in effect between EF subgroups.
 
 ### Residual confounding
 
-In order to assess how robust the association between ablation and the primary outcome, all-cause-mortality/first HFH, is to residual confounding the E-value was calculated [@evalue]. The E-value is interpreted as the minimum Risk Ratio that an unmeasured confounder would need to have with both ablation and all-cause-mortality/first HFH, conditional on the variables currently adjusted for in the model, to fully eliminate the association between ablation and all-cause-mortality/first HFH.  
+In order to assess how robust the association between ablation and the primary 
+outcome, all-cause-mortality/first HFH, is to residual confounding the E-value 
+was calculated [@evalue]. The E-value is interpreted as the minimum Risk Ratio 
+that an unmeasured confounder would need to have with both ablation and 
+all-cause-mortality/first HFH, conditional on the variables currently adjusted 
+for in the model, to fully eliminate the association between ablation and all-cause-mortality/first HFH.  
 
 ```{r, child = "../src/evalue.Rmd"}
 
 ```
 
-See Table \ref{tab:evalue2} in order to compare the magnitude of the E-value within the context of the study [@evalue2]. 
+See Table \ref{tab:evalue2} in order to compare the magnitude of the E-value 
+within the context of the study [@evalue2]. 
 
 \clearpage
 \newpage

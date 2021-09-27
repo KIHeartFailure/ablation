@@ -1,5 +1,5 @@
 ```{r outtab, cache=cacheon}
-survfunc <- function(time, event, eventcr = NULL, eventname) {
+survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
   out <- data.frame(matrix(NA, ncol = 4, nrow = ifelse(is.null(eventcr), 4, 5)))
 
   out[1, 1] <- eventname
@@ -8,13 +8,22 @@ survfunc <- function(time, event, eventcr = NULL, eventname) {
   ## incidence rate
   out[1, 2] <- "No events, sum py, incidence rate/1000py (95% CI)"
 
-  ev <- pop %>%
-    group_by(ablation) %>%
-    summarise(
-      ev = sum(!!sym(event) == "Yes"),
-      .groups = "rowwise"
-    )
-
+  if (!rep) {
+    ev <- pop %>%
+      group_by(ablation) %>%
+      summarise(
+        ev = sum(!!sym(event) == "Yes"),
+        .groups = "rowwise"
+      )
+  }
+  if (rep) {
+    ev <- pop %>%
+      group_by(ablation) %>%
+      summarise(
+        ev = sum(!!sym(event)),
+        .groups = "rowwise"
+      )
+  }
   s <- pop %>%
     group_by(ablation) %>%
     summarise(
@@ -31,70 +40,129 @@ survfunc <- function(time, event, eventcr = NULL, eventname) {
     fn(r$upper, dig = 0), ")"
   )
 
-  # cox regressions
-  ## crude
-  out[2, 2] <- "Crude HR (95% CI), p-value"
+  if (!rep) {
+    # cox regressions
+    ## crude
+    out[2, 2] <- "Crude HR (95% CI), p-value"
 
-  ## crude
-  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation")),
-    data = pop
-  ))
-
-  out[2, 3:4] <- c("ref", paste0(
-    fn(mod$conf.int[1, 1], dig = 2),
-    " (", fn(mod$conf.int[1, 3], dig = 2),
-    "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
-    fn(mod$coef[1, 5], dig = 3, p = TRUE)
-  ))
-
-  ## adjusted covs
-  out[3, 2] <- "Adjusted individual covariates HR (95% CI), p-value"
-
-  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + ", paste(modvarsns, collapse = " + "))),
-    data = pop
-  ))
-
-  out[3, 3:4] <- c("ref", paste0(
-    fn(mod$conf.int[1, 1], dig = 2),
-    " (", fn(mod$conf.int[1, 3], dig = 2),
-    "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
-    fn(mod$coef[1, 5], dig = 3, p = TRUE)
-  ))
-
-  ## adjusted match
-  out[4, 2] <- "Adjusted ps matched HR (95% CI), p-value"
-
-  mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + (1 | par)")),
-    data = matchpop
-  )
-
-  se <- sqrt(vcov(mod)[1])
-
-  out[4, 3:4] <- c("ref", paste0(
-    fn(exp(mod$coefficients[1]), dig = 2),
-    " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
-    "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
-    fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
-  ))
-
-  if (!is.null(eventcr)) {
-    out[5, 2] <- "Adjusted ps matched, death as competing event, HR (95% CI), p-value"
-
-    mod <- summary(crr(
-      fstatus = matchpop %>% pull(!!sym(eventcr)),
-      ftime = matchpop %>% pull(!!sym(time)),
-      cov1 = matchpop %>% pull(ablationnum),
-      failcode = 1,
-      cencode = 0
+    ## crude
+    mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation")),
+      data = pop
     ))
 
-    out[5, 3:4] <- c("ref", paste0(
+    out[2, 3:4] <- c("ref", paste0(
       fn(mod$conf.int[1, 1], dig = 2),
       " (", fn(mod$conf.int[1, 3], dig = 2),
       "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
       fn(mod$coef[1, 5], dig = 3, p = TRUE)
     ))
+
+    ## adjusted covs
+    out[3, 2] <- "Adjusted individual covariates HR (95% CI), p-value"
+
+    mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + ", paste(modvars, collapse = " + "))),
+      data = pop
+    ))
+
+    out[3, 3:4] <- c("ref", paste0(
+      fn(mod$conf.int[1, 1], dig = 2),
+      " (", fn(mod$conf.int[1, 3], dig = 2),
+      "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
+      fn(mod$coef[1, 5], dig = 3, p = TRUE)
+    ))
+
+    ## adjusted match
+    out[4, 2] <- "Adjusted ps matched HR (95% CI), p-value"
+
+    mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + (1 | par)")),
+      data = matchpop
+    )
+
+    se <- sqrt(vcov(mod)[1])
+
+    out[4, 3:4] <- c("ref", paste0(
+      fn(exp(mod$coefficients[1]), dig = 2),
+      " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
+      "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
+      fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
+    ))
+
+    if (!is.null(eventcr)) {
+      out[5, 2] <- "Adjusted ps matched, death as competing event, HR (95% CI), p-value"
+
+      mod <- summary(crr(
+        fstatus = matchpop %>% pull(!!sym(eventcr)),
+        ftime = matchpop %>% pull(!!sym(time)),
+        cov1 = matchpop %>% pull(ablationnum),
+        failcode = 1,
+        cencode = 0
+      ))
+
+      out[5, 3:4] <- c("ref", paste0(
+        fn(mod$conf.int[1, 1], dig = 2),
+        " (", fn(mod$conf.int[1, 3], dig = 2),
+        "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
+        fn(mod$coef[1, 5], dig = 3, p = TRUE)
+      ))
+    }
   }
+  if (rep) {
+    # neg bin regression
+    ## crude
+    out[2, 2] <- "Crude IRR (95% CI), p-value"
+
+    ## crude
+    mod <- summary(glm.nb(formula(paste0(event, " ~ ablation + offset(log(", time, "))")),
+      data = pop %>% filter(!!sym(time) > 0)
+    ))
+
+    out[2, 3:4] <- c(
+      "ref",
+      paste0(
+        fn(exp(mod$coefficients[2, 1]), dig = 2),
+        " (", fn(exp(mod$coefficients[2, 1] - global_z05 * mod$coefficients[2, 2]), dig = 2),
+        "-", fn(exp(mod$coefficients[2, 1] + global_z05 * mod$coefficients[2, 2]), dig = 2), "), ",
+        fn(mod$coefficients[2, 4], dig = 3, p = TRUE)
+      )
+    )
+
+    ## adjusted covs
+    out[3, 2] <- "Adjusted individual covariates IRR (95% CI), p-value"
+
+    mod <- summary(glm.nb(formula(paste0(event, " ~ ablation + ", paste(modvars, collapse = " + "), " + offset(log(", time, "))")),
+      data = pop %>% filter(!!sym(time) > 0)
+    ))
+
+    out[3, 3:4] <- c("ref", paste0(
+      fn(exp(mod$coefficients[2, 1]), dig = 2),
+      " (", fn(exp(mod$coefficients[2, 1] - global_z05 * mod$coefficients[2, 2]), dig = 2),
+      "-", fn(exp(mod$coefficients[2, 1] + global_z05 * mod$coefficients[2, 2]), dig = 2), "), ",
+      fn(mod$coefficients[2, 4], dig = 3, p = TRUE)
+    ))
+
+    ## adjusted match
+    out[4, 2] <- "Adjusted ps matched IRR (95% CI), p-value"
+
+    mod <- summary(lme4::glmer.nb(formula(paste0(event, " ~ ablation + (1 | par) + offset(log(", time, "))")),
+      data = matchpop %>% filter(!!sym(time) > 0)
+    ))
+
+    se <- sqrt(vcov(mod)[1])
+
+    out[4, 3:4] <- c(
+      "ref",
+      paste0(
+        fn(exp(mod$coefficients[2, "Estimate"]), 2),
+        " (",
+        fn(exp(mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]), 2),
+        "-",
+        fn(exp(mod$coefficients[2, "Estimate"] + global_z05 * mod$coefficients[2, "Std. Error"]), 2),
+        "), ",
+        fn(mod$coefficients[2, "Pr(>|z|)"], dig = 3, p = T)
+      )
+    )
+  }
+
   return(out)
 }
 
@@ -102,6 +170,13 @@ s1 <- survfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_deathhosphf",
   eventname = "All-cause mortality/first HF hospitalization"
+)
+
+s1_2 <- survfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_nodeathhosphf",
+  eventname = "All-cause mortality/recurrent HF hospitalization",
+  rep = T
 )
 
 s2 <- survfunc(
@@ -115,6 +190,13 @@ s3 <- survfunc(
   event = "sos_out_hosphf",
   eventcr = "sos_out_hosphf_cr",
   eventname = "First HF hospitalization"
+)
+
+s3_2 <- survfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_nohosphf",
+  eventname = "Recurrent HF hospitalization",
+  rep = T
 )
 
 s4 <- survfunc(
@@ -146,7 +228,7 @@ s7 <- survfunc(
 )
 
 outall <- rbind(
-  s1, s2, s3, s4, s5, s6, s7
+  s1, s1_2, s2, s3, s3_2, s4, s5, s6, s7
 )
 
 write.xlsx(outall, paste0("./output/tabs/out_", Sys.Date(), ".xlsx"), rowNames = FALSE)

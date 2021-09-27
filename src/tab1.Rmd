@@ -52,8 +52,8 @@ write.xlsx(tab1, paste0("./output/tabs/tab1_", Sys.Date(), ".xlsx"), rowNames = 
 tab1 <- tab1 %>%
   mutate(
     footnote1 = if_else(str_detect(var, "^scb_dispincome_cat2"), footnote_marker_symbol(1), ""),
-    footnote1 = if_else(str_detect(var, "^sos_comdur_af"), footnote_marker_symbol(2), ""),
-    footnote2 = if_else(str_detect(tab1$var, paste0("^", modvars, collapse = "|")), footnote_marker_symbol(3), "")
+    footnote2 = if_else(str_detect(var, "^sos_comdur_af"), footnote_marker_symbol(2), ""),
+    footnote3 = if_else(str_detect(tab1$var, paste0("^", modvars, collapse = "|")), footnote_marker_symbol(3), "")
   ) %>%
   unite(footnote, starts_with("footnote"), sep = "") %>%
   mutate(

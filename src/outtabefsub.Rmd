@@ -1,32 +1,102 @@
 ```{r outtabefsub, cache=cacheon}
-survefsubfunc <- function(time, event, eventname) {
-  out <- data.frame(matrix(NA, ncol = 5, 1))
+survefsubfunc <- function(time, event, eventname, rep = FALSE) {
+  out <- data.frame(matrix(NA, ncol = 9, 1))
 
   levsef <- levels(matchpop$shf_ef_cat)
 
   out[1, 1] <- eventname
-  colnames(out) <- c("Outcome", levsef, "p-value interaction")
+  colnames(out) <- c("Outcome", "Model", rep(c("No ablation", "Ablation"), 3), "p-value interaction")
+
+  ## incidence rate
+  out[1, 2] <- "No events, sum py, incidence rate/1000py (95% CI)"
 
   for (i in seq_along(levsef)) {
+    row <- i + (i - 1) + 2
 
-    ## adjusted match
-    mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation * relevel(shf_ef_cat, ref = '", levsef[i], "') + (1 | par)")),
-      data = matchpop
+    if (!rep) {
+      ev <- pop %>%
+        filter(shf_ef_cat == levsef[i]) %>%
+        group_by(ablation) %>%
+        summarise(
+          ev = sum(!!sym(event) == "Yes"),
+          .groups = "rowwise"
+        )
+    }
+    if (rep) {
+      ev <- pop %>%
+        filter(shf_ef_cat == levsef[i]) %>%
+        group_by(ablation) %>%
+        summarise(
+          ev = sum(!!sym(event)),
+          .groups = "rowwise"
+        )
+    }
+
+    s <- pop %>%
+      filter(shf_ef_cat == levsef[i]) %>%
+      group_by(ablation) %>%
+      summarise(
+        s = sum(!!sym(time) / 365.25),
+        .groups = "rowwise"
+      )
+    r <- pois.exact(x = ev$ev, pt = s$s / 1000)
+
+    out[1, row:(row + 1)] <- paste0(
+      ev$ev, ", ",
+      fn(s$s, dig = 0), ", ",
+      fn(r$rate, dig = 0), " (",
+      fn(r$lower, dig = 0), "-",
+      fn(r$upper, dig = 0), ")"
     )
 
-    se <- sqrt(vcov(mod)[1])
+    if (!rep) {
+      out[2, 2] <- "Adjusted ps matched HR (95% CI), p-value"
+      ## adjusted match
+      mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation * relevel(shf_ef_cat, ref = '", levsef[i], "') + (1 | par)")),
+        data = matchpop
+      )
 
-    out[1, (i + 1)] <- paste0(
-      fn(exp(mod$coefficients[1]), dig = 2),
-      " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
-      "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
-      fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
-    )
+      se <- sqrt(vcov(mod)[1])
 
-    if (i == 1) {
-      pint <- car::Anova(mod, type = "III", test.statistic = "Wald")
+      out[2, row:(row + 1)] <- c("ref", paste0(
+        fn(exp(mod$coefficients[1]), dig = 2),
+        " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
+        "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
+        fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
+      ))
 
-      out[1, 5] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
+      if (i == 1) {
+        pint <- car::Anova(mod, type = "III", test.statistic = "Wald")
+
+        out[2, 9] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
+      }
+    }
+    if (rep) {
+      out[2, 2] <- "Adjusted ps matched IRR (95% CI), p-value"
+
+      mod <- summary(mod2 <- lme4::glmer.nb(formula(paste0(event, " ~ ablation * relevel(shf_ef_cat, ref = '", levsef[i], "') + (1 | par) + offset(log(", time, "))")),
+        data = matchpop %>% filter(!!sym(time) > 0)
+      ))
+
+      se <- sqrt(vcov(mod)[1])
+
+      out[2, row:(row + 1)] <- c(
+        "ref",
+        paste0(
+          fn(exp(mod$coefficients[2, "Estimate"]), 2),
+          " (",
+          fn(exp(mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]), 2),
+          "-",
+          fn(exp(mod$coefficients[2, "Estimate"] + global_z05 * mod$coefficients[2, "Std. Error"]), 2),
+          "), ",
+          fn(mod$coefficients[2, "Pr(>|z|)"], dig = 3, p = T)
+        )
+      )
+      if (i == 1) {
+        pint <- car::Anova(mod2, type = "III", test.statistic = "Chisq")
+
+        out[2, 9] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
+      }
     }
   }
   return(out)
@@ -36,6 +106,13 @@ s1 <- survefsubfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_deathhosphf",
   eventname = "All-cause mortality/first HF hospitalization"
+)
+
+s1_2 <- survefsubfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_nodeathhosphf",
+  eventname = "All-cause mortality/recurrent HF hospitalization",
+  rep = T
 )
 
 s2 <- survefsubfunc(
@@ -48,6 +125,13 @@ s3 <- survefsubfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_hosphf",
   eventname = "First HF hospitalization"
+)
+
+s3_2 <- survefsubfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_nohosphf",
+  eventname = "Recurrent HF hospitalization",
+  rep = T
 )
 
 s4 <- survefsubfunc(
@@ -74,17 +158,17 @@ s7 <- survefsubfunc(
   eventname = "First all-cause hospitalization"
 )
 
+
 outall <- rbind(
-  s1, s2, s3, s4, s5, s6, s7
+  s1, s1_2, s2, s3, s3_2, s4, s5, s6, s7
 )
 
 write.xlsx(outall, paste0("./output/tabs/outefsub_", Sys.Date(), ".xlsx"), rowNames = FALSE)
 
-footnote(
-  default_kable(outall,
-    font_size = 6,
-    caption = "Association between ablation and outcomes in EF subgroups"
-  ),
-  general = "HR (95% CI), p-value"
-)
+default_kable(outall,
+  font_size = 6,
+  caption = "Association between ablation and outcomes in EF subgroups"
+) %>%
+  add_header_above(c(" " = 1, " " = 1, "HFrEF" = 2, "HFmrEF" = 2, "HFpEF" = 2, " " = 1)) %>%
+  landscape()
 ```

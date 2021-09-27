@@ -176,7 +176,7 @@ kmfunc(
   event = "sos_out_hosphf",
   eventcr = "sos_out_hosphf_cr",
   eventname = "First HF hospitalization (%)",
-  yposplus = c(0, 0, 0)
+  yposplus = c(0.005, 0, -0.005)
 )
 ```
 
@@ -186,7 +186,7 @@ kmfunc(
   event = "sos_out_hospstroketia",
   eventcr = "sos_out_hospstroketia_cr",
   eventname = "First TIA/Stroke hospitalization (%)",
-  yposplus = c(0, -0.01, 0.01) # no all, yes, no matched
+  yposplus = c(0, -0.0, 0.0) # no all, yes, no matched
 )
 ```
 

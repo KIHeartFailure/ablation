@@ -87,8 +87,8 @@ match5 <- Match(
   M = 5
 )
 matchingn <- paste0(
-  "org data, N = ", sum(tmpdata$ablationnum), ", ",
-  "org no-missing data, N = ", sum(tmpdata$ablationnum), ", ",
+  "org data: N = ", sum(tmpdata$ablationnum), ", ",
+  "org no-missing data: N = ", sum(tmpdata$ablationnum), ", ",
   "1:1: N = ", match1$wnobs, ", ",
   "1:2: N = ", match2$wnobs, ", ",
   "1:3: N = ", match3$wnobs, ", ",

@@ -1,6 +1,6 @@
 ```{r evalue, cache=cacheon}
 
-mod <- summary(coxph(formula(paste0("Surv(sos_outtime_hosphf, sos_out_deathhosphf == 'Yes') ~ ablation + ", paste(modvarsns, collapse = " + "))),
+mod <- summary(coxph(formula(paste0("Surv(sos_outtime_hosphf, sos_out_deathhosphf == 'Yes') ~ ablation + ", paste(modvars, collapse = " + "))),
   data = pop
 ))
 

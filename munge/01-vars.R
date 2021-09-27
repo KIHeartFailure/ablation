@@ -19,6 +19,7 @@ tabvars <- c(
   "sos_com_afparoxysmal",
   "sos_com_afpersistent",
   "sos_comdur_af",
+  "sos_comdur_af_cat",
   "sos_com_hypertension",
   "sos_com_diabetes",
   "sos_com_liver",
@@ -42,20 +43,22 @@ tabvars <- c(
   "ddr_diuretics",
   "ddr_mra",
   "ddr_antiplatlet",
-  "ddr_anticoagulant",
+  "ddr_oralanticoagulant",
   "ddr_lipidlowering",
   "ddr_sglt2i_glp1a"
 )
 
 # vars fox log reg and cox reg
 tabvars_not_in_mod <- c(
+  "sos_comdur_af",
+  
   "sos_com_afparoxysmal",
   "sos_com_afpersistent",
 
   "chadsvasc",
-  "chadsvasc_cat"
+  "chadsvasc_cat",
+  
+  "ddr_sglt2i_glp1a"
 )
 
-nsvars <- c("shf_age", "indexyear", "sos_comdur_af")
 modvars <- c(tabvars[!(tabvars %in% tabvars_not_in_mod)])
-modvarsns <- if_else(modvars %in% nsvars, paste0("ns(", modvars, ", df = 4)"), modvars)
