@@ -35,30 +35,30 @@ tabvars <- c(
   "sos_com_renal",
 
   # treatments
-  "ddr_aad",
-  "ddr_ratecontrol",
-  "ddr_bbl",
-  "ddr_digoxin",
-  "ddr_rasiarni",
-  "ddr_diuretics",
-  "ddr_mra",
-  "ddr_antiplatlet",
-  "ddr_oralanticoagulant",
-  "ddr_lipidlowering",
-  "ddr_sglt2i_glp1a"
+  "sos_ddr_aad",
+  "sos_ddr_ratecontrol",
+  "sos_ddr_bbl",
+  "sos_ddr_digoxin",
+  "sos_ddr_rasiarni",
+  "sos_ddr_diuretics",
+  "sos_ddr_mra",
+  "sos_ddr_antiplatlet",
+  "sos_ddr_oralanticoagulant",
+  "sos_ddr_lipidlowering",
+  "sos_ddr_sglt2i_glp1a"
 )
 
 # vars fox log reg and cox reg
 tabvars_not_in_mod <- c(
   "sos_comdur_af",
-  
+
   "sos_com_afparoxysmal",
   "sos_com_afpersistent",
 
   "chadsvasc",
   "chadsvasc_cat",
-  
-  "ddr_sglt2i_glp1a"
+
+  "sos_ddr_sglt2i_glp1a"
 )
 
 modvars <- c(tabvars[!(tabvars %in% tabvars_not_in_mod)])

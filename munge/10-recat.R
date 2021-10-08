@@ -13,13 +13,16 @@ pop <- pop %>%
     labels = c("HFrEF", "HFmrEF", "HFpEF"),
     levels = 1:3
     ),
-    
-    sos_comdur_af_cat = factor(case_when(sos_comdur_af < 365 / 2 ~ 1, 
-                                  sos_comdur_af < 365 ~ 2, 
-                                  sos_comdur_af <= 365  * 3 ~ 3, 
-                                  sos_comdur_af > 365 * 3 ~ 4),
-                               levels = 1:4, labels = c("<0.5 years", "0.5-1 years", "1-3 years", ">3 years")),
-    
+
+    sos_comdur_af_cat = factor(case_when(
+      sos_comdur_af < 365 / 2 ~ 1,
+      sos_comdur_af < 365 ~ 2,
+      sos_comdur_af <= 365 * 3 ~ 3,
+      sos_comdur_af > 365 * 3 ~ 4
+    ),
+    levels = 1:4, labels = c("<0.5 years", "0.5-1 years", "1-3 years", ">3 years")
+    ),
+
     # chadsvasc
     chadsvasc = 1 + # hf
       if_else(sos_com_hypertension == "Yes", 1, 0) +
@@ -38,10 +41,9 @@ pop <- pop %>%
         sos_out_hosphf == "Yes" ~ "Yes",
       TRUE ~ "No"
     ),
-    
-    sos_out_nodeathhosphf = sos_out_nohosphf,
-    sos_out_nodeathhosphf = if_else(sos_out_death == "Yes", sos_out_nodeathhosphf + 1, sos_out_nodeathhosphf),
-      
+
+    sos_out_nodeathhosphf = if_else(sos_out_death == "Yes", sos_out_nohosphf + 1, sos_out_nohosphf),
+
     # comp risk
     sos_out_hosphf_cr = create_crevent(sos_out_hosphf, sos_out_death),
     sos_out_hospstroketia_cr = create_crevent(sos_out_hospstroketia, sos_out_death),

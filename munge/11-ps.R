@@ -4,25 +4,28 @@
 
 # All patients ------------------------------------------------------------
 
+popps <- pop %>% drop_na(any_of(modvars))
+
 ps <- glm(formula(paste0(
   "ablation == 'Yes' ~ ", paste(modvars, collapse = " + ")
 )),
-data = pop,
+data = popps,
 family = binomial
 )
 
 popps <- bind_cols(
-  pop %>% drop_na(any_of(modvars)),
+  popps,
   ps = ps$fitted.values
-)
+) %>%
+  select(
+    LopNr,
+    indexdtm,
+    ps
+  )
 
-pop <- left_join(pop,
-  popps %>%
-    select(
-      LopNr,
-      indexdtm,
-      ps
-    ),
+pop <- left_join(
+  pop,
+  popps,
   by = c("LopNr", "indexdtm")
 )
 
@@ -87,7 +90,7 @@ match5 <- Match(
   M = 5
 )
 matchingn <- paste0(
-  "org data: N = ", sum(tmpdata$ablationnum), ", ",
+  "org data: N = ", sum(pop$ablationnum), ", ",
   "org no-missing data: N = ", sum(tmpdata$ablationnum), ", ",
   "1:1: N = ", match1$wnobs, ", ",
   "1:2: N = ", match2$wnobs, ", ",

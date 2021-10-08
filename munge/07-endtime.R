@@ -6,13 +6,12 @@ pop <- bind_rows(
       ablation = 1,
       indexdtm = sos_ablationdtm
     ),
-  rsdata %>%
+  controlpop %>%
     mutate(
       ablation = 0,
       indexdtm = shf_indexdtm
     )
 ) %>%
-  select(-sos_com_af) %>%
   mutate(
     ablation = factor(ablation, levels = 0:1, labels = c("No", "Yes")),
     indexyear = as.numeric(year(indexdtm))
@@ -21,12 +20,6 @@ pop <- bind_rows(
 # table(duplicated(ablationpop$LopNr))
 # table(duplicated(rsdata$LopNr))
 # table(duplicated(pop$LopNr)) # 213 pats both cases and controls
-
-
-# koll <- left_join(pop %>% group_by(LopNr) %>% slice(2) %>% ungroup() %>% select(LopNr),
-#                  pop,
-#                  by = "LopNr")
-
 
 # migration
 
@@ -78,5 +71,6 @@ pop <- pop %>%
       pmin(sos_deathdtm, tmp_migrationdtm, na.rm = TRUE),
       ymd("2019-12-31")
     ),
-    censdtm = if_else(ablation == "No", pmin(censdtm, sos_ablationdtm - 1, na.rm = TRUE), censdtm)
+    censdtm = if_else(ablation == "No", pmin(censdtm, sos_ablationdtm - 1, na.rm = TRUE), censdtm), 
+    indexdtm = pmin(censdtm, indexdtm, na.rm = TRUE) # 2 obs date of death few days after index
   )

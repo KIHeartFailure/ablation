@@ -328,12 +328,3 @@ pop <- create_deathvar(
   warnings = FALSE,
   meta_pos = "ULORSAK"
 )
-
-# cut times at 5 years
-
-#pop <- cut_surv(pop, sos_out_death, sos_outtime_death, floor(365.25 * 5), rename = "5y", cuttime = FALSE)
-#pop <- cut_surv(pop, sos_out_hosphf, sos_outtime_hosphf, floor(365.25 * 5), rename = "5y")
-#pop <- cut_surv(pop, sos_out_hospstroketia, sos_outtime_hospstroketia, floor(365.25 * 5), rename = "5y")
-#pop <- cut_surv(pop, sos_out_deathcv, sos_outtime_death, floor(365.25 * 5), rename = "5y")
-#pop <- cut_surv(pop, sos_out_hospcv, sos_outtime_hospcv, floor(365.25 * 5), rename = "5y")
-#pop <- cut_surv(pop, sos_out_hospany, sos_outtime_hospany, floor(365.25 * 5), rename = "5y")

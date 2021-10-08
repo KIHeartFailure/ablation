@@ -26,8 +26,8 @@ ablationpop <- ablationpop %>%
 flowcase <- rbind(flowcase, c("Ablation post > 1 Dec 2005 (start of DDR + 5 months)", nrow(ablationpop)))
 
 ablationpop <- ablationpop %>%
-  filter(sos_ablationdtm <= ymd("2018-12-31"))
-flowcase <- rbind(flowcase, c("Ablation post <= 31 Dec 2018 (similar to restriction for controls)", nrow(ablationpop)))
+  filter(sos_ablationdtm <= ymd("2019-12-31"))
+flowcase <- rbind(flowcase, c("Ablation post <= 31 Dec 2019", nrow(ablationpop)))
 
 ablationpop <- ablationpop %>%
   filter(dia)
@@ -57,12 +57,9 @@ ablationpop <- ablationpop %>%
 flowcase <- rbind(flowcase, c("Ablation post does NOT have procedure FPE00, FPE20 within 3 months prior", nrow(ablationpop)))
 
 ablationpop <- inner_join(ablationpop,
-  rsdata324 %>%
-    filter(
-      casecontrol == "Case",
-      !is.na(shf_ef)
-    ) %>%
-    select(LopNr, shf_indexdtm, shf_sex, shf_age, shf_ef, scb_child),
+  rsdata %>%
+    filter(!is.na(shf_ef)) %>%
+    select(LopNr, shf_indexdtm, shf_sex, shf_age, shf_ef),
   by = "LopNr"
 ) %>%
   mutate(diff = as.numeric(sos_ablationdtm - shf_indexdtm)) %>%
