@@ -1,6 +1,5 @@
 ---
 title: 'Statistical report: Ablation in HF'
-subtitle: 'DRAFT'
 author: 'Statistician: Lina Benson'
   
 date: "`r Sys.Date()`"
@@ -15,8 +14,6 @@ bibliography: references.bib
 nocite: '@*'
 urlcolor: blue
 linkcolor: black
-header-includes:
-   - \usepackage{draftwatermark}
 ---
 
 \newpage 
@@ -54,9 +51,14 @@ cacheon <- TRUE
 
 ## Data source
 
-SHFDB3, https://kiheartfailure.github.io/shfdb3/, v 3.2.4. 
+Data sources/data management similar to https://kiheartfailure.github.io/shfdb3/. 
+Note that for this project the inclusion period is up until 2019-12-31. 
 
 ## Inclusion/exclusion
+
+```{r flowrs}
+default_kable(flowrs, caption = "Flowchart for SwedeHF")
+```
 
 ```{r flowcase}
 default_kable(flowcase, caption = "Flowchart for cases")
@@ -102,6 +104,9 @@ comparisons were made and therefore the results should be viewed with care.
 
 ## Missing data
 
+For patients included in 2019 baseline data for education (2018) was not available, 
+in these cases the value from the previous year (2017) is carried forward. 
+
 The loss of patients due to missing data for the variables included in the models was small, `r paste0(pop %>% 
          mutate(anyna = factor(if_else(rowSums(is.na(select(., !!!syms(modvars)))) > 0, "Yes", "No"))) %>%
          group_by(ablation) %>%
@@ -138,7 +143,8 @@ retained and balance between groups. Other matching ratios: `r matchingn`.
 Data were censored at 2019-12-31, death, emigration, or, for the controls, ablation for AF. 
 
 Time to first events were presented with Kaplan-Meier curves for outcomes including all-cause mortality 
-curves and cumulative incidence curves treating death as a competing event for other outcomes. 
+and cumulative incidence curves treating death as a competing event for other outcomes. 
+The mean cumulative function (MCF) was used to depict the recurrent events. 
 
 Cox proportional hazards regressions were 
 used to model the time to first event, partly crude and partly adjusted for variables indicated in 
@@ -151,7 +157,7 @@ As a consistency analysis, outcomes not including all-cause mortality were model
 using a sub-distributional hazards model [@fg] 
 where death was treated as a competing event. 
 
-Repeated events were model using a negative binomial generalized linear model 
+Recurrent events were model using a negative binomial generalized linear model 
 including the log of time as an offset in the model, crude and adjusted as above. 
 For the matched data a generalized linear mixed-effects model (GLMMM) for the negative binomial family 
 was used in order to incorporate matched pairs as a random effect. 
@@ -206,14 +212,13 @@ outcome, all-cause-mortality/first HFH, is to residual confounding the E-value
 was calculated [@evalue]. The E-value is interpreted as the minimum Risk Ratio 
 that an unmeasured confounder would need to have with both ablation and 
 all-cause-mortality/first HFH, conditional on the variables currently adjusted 
-for in the model, to fully eliminate the association between ablation and all-cause-mortality/first HFH.  
+for in the model, to fully eliminate the association between ablation and 
+all-cause-mortality/first HFH. See Table \ref{tab:evalue2} in order to compare the magnitude of the E-value 
+within the context of the study [@evalue2]. 
 
 ```{r, child = "../src/evalue.Rmd"}
 
 ```
-
-See Table \ref{tab:evalue2} in order to compare the magnitude of the E-value 
-within the context of the study [@evalue2]. 
 
 \clearpage
 \newpage

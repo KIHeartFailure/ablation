@@ -16,6 +16,7 @@ ProjectTemplate::reload.project(
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("modvars")
 
+ProjectTemplate::cache("flowrs")
 ProjectTemplate::cache("flowcase")
 ProjectTemplate::cache("flowcontrol")
 ProjectTemplate::cache("metalm")
@@ -25,3 +26,6 @@ ProjectTemplate::cache("matchingn")
 
 ProjectTemplate::cache("pop")
 ProjectTemplate::cache("matchpop")
+
+ProjectTemplate::cache("pop_rec_hosphf")
+ProjectTemplate::cache("matchpop_rec_hosphf")

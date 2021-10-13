@@ -6,7 +6,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
   colnames(out) <- c("Outcome", "Model", "No ablation", "Ablation")
 
   ## incidence rate
-  out[1, 2] <- "No events, sum py, incidence rate/1000py (95% CI)"
+  out[1, 2] <- "No events, sum py, incidence rate/100py (95% CI)"
 
   if (!rep) {
     ev <- pop %>%
@@ -30,14 +30,14 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
       s = sum(!!sym(time) / 365.25),
       .groups = "rowwise"
     )
-  r <- pois.exact(x = ev$ev, pt = s$s / 1000)
+  r <- pois.exact(x = ev$ev, pt = s$s / 100)
 
   out[1, 3:4] <- paste0(
     ev$ev, ", ",
     fn(s$s, dig = 0), ", ",
-    fn(r$rate, dig = 0), " (",
-    fn(r$lower, dig = 0), "-",
-    fn(r$upper, dig = 0), ")"
+    fn(r$rate, dig = 1), " (",
+    fn(r$lower, dig = 1), "-",
+    fn(r$upper, dig = 1), ")"
   )
 
   if (!rep) {
@@ -88,7 +88,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     ))
 
     if (!is.null(eventcr)) {
-      out[5, 2] <- "Adjusted ps matched, death as competing event, HR (95% CI), p-value"
+      out[5, 2] <- "Adjusted ps matched, sub-distribution, HR (95% CI), p-value"
 
       mod <- summary(crr(
         fstatus = matchpop %>% pull(!!sym(eventcr)),
@@ -224,7 +224,7 @@ s7 <- survfunc(
   time = "sos_outtime_hospany",
   event = "sos_out_hospany",
   eventcr = "sos_out_hospany_cr",
-  eventname = "First all-cause hospitalization"
+  eventname = "First hospitalization"
 )
 
 outall <- rbind(

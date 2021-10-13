@@ -47,3 +47,11 @@ load(file = "C:/Users/Lina/STATISTIK/Projects/20200225_shfdb3/dm/data/rawData_sc
 # Store as RData in /data folder ------------------------------------------
 
 save(file = "./data/rawData_scb.RData", list = c("rawData_scb"))
+
+# UCR data ----------------------------------------------------------------
+
+load(file = "C:/Users/Lina/STATISTIK/Projects/20200225_shfdb3/dm/data/rawData_rs.RData")
+
+# Store as RData in /data folder ------------------------------------------
+
+save(file = "./data/rawData_rs.RData", list = c("rawData_rs"))

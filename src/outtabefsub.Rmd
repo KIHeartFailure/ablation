@@ -8,7 +8,7 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
   colnames(out) <- c("Outcome", "Model", rep(c("No ablation", "Ablation"), 3), "p-value interaction")
 
   ## incidence rate
-  out[1, 2] <- "No events, sum py, incidence rate/1000py (95% CI)"
+  out[1, 2] <- "No events, sum py, incidence rate/100py (95% CI)"
 
   for (i in seq_along(levsef)) {
     row <- i + (i - 1) + 2
@@ -39,14 +39,14 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
         s = sum(!!sym(time) / 365.25),
         .groups = "rowwise"
       )
-    r <- pois.exact(x = ev$ev, pt = s$s / 1000)
+    r <- pois.exact(x = ev$ev, pt = s$s / 100)
 
     out[1, row:(row + 1)] <- paste0(
       ev$ev, ", ",
       fn(s$s, dig = 0), ", ",
-      fn(r$rate, dig = 0), " (",
-      fn(r$lower, dig = 0), "-",
-      fn(r$upper, dig = 0), ")"
+      fn(r$rate, dig = 1), " (",
+      fn(r$lower, dig = 1), "-",
+      fn(r$upper, dig = 1), ")"
     )
 
     if (!rep) {
@@ -155,7 +155,7 @@ s6 <- survefsubfunc(
 s7 <- survefsubfunc(
   time = "sos_outtime_hospany",
   event = "sos_out_hospany",
-  eventname = "First all-cause hospitalization"
+  eventname = "First hospitalization"
 )
 
 
