@@ -1,11 +1,16 @@
 ```{r outtabefsub, cache=cacheon}
 survefsubfunc <- function(time, event, eventname, rep = FALSE) {
   out <- data.frame(matrix(NA, ncol = 9, 1))
+  outforest <- data.frame(matrix(NA, ncol = 6, 4))
 
   levsef <- levels(matchpop$shf_ef_cat)
 
   out[1, 1] <- eventname
   colnames(out) <- c("Outcome", "Model", rep(c("No ablation", "Ablation"), 3), "p-value interaction")
+
+  colnames(outforest) <- c("Outcome", "loghr", "lci", "uci", "hrprint", "pint")
+  outforest[1, 1] <- eventname
+  outforest[2:4, 1] <- paste0(" ", levsef)
 
   ## incidence rate
   out[1, 2] <- "No events, sum py, incidence rate/100py (95% CI)"
@@ -65,10 +70,20 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
         fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
       ))
 
+      outforest[i + 1, 2] <- mod$coefficients[1]
+      outforest[i + 1, 3] <- mod$coefficients[1] - global_z05 * se
+      outforest[i + 1, 4] <- mod$coefficients[1] + global_z05 * se
+      outforest[i + 1, 5] <- paste0(
+        fn(exp(mod$coefficients[1]), dig = 2),
+        " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
+        "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), ")"
+      )
+
       if (i == 1) {
         pint <- car::Anova(mod, type = "III", test.statistic = "Wald")
 
         out[2, 9] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
+        outforest[1, 6] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
       }
     }
     if (rep) {
@@ -92,14 +107,29 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
           fn(mod$coefficients[2, "Pr(>|z|)"], dig = 3, p = T)
         )
       )
+
+      outforest[i + 1, 2] <- mod$coefficients[2, "Estimate"]
+      outforest[i + 1, 3] <- mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]
+      outforest[i + 1, 4] <- mod$coefficients[2, "Estimate"] + global_z05 * mod$coefficients[2, "Std. Error"]
+      outforest[i + 1, 5] <- paste0(
+        fn(exp(mod$coefficients[2, "Estimate"]), 2),
+        " (",
+        fn(exp(mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]), 2),
+        "-",
+        fn(exp(mod$coefficients[2, "Estimate"] + global_z05 * mod$coefficients[2, "Std. Error"]), 2),
+        ")"
+      )
+
       if (i == 1) {
         pint <- car::Anova(mod2, type = "III", test.statistic = "Chisq")
 
         out[2, 9] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
+        outforest[1, 6] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
       }
     }
   }
-  return(out)
+  outboth <- list(out = out, outforest = outforest)
+  return(outboth)
 }
 
 s1 <- survefsubfunc(
@@ -157,18 +187,137 @@ s7 <- survefsubfunc(
   event = "sos_out_hospany",
   eventname = "First hospitalization"
 )
+```
 
-
+```{r outtabefsubprint, dependson="outtabefsub", cache=cacheon}
 outall <- rbind(
-  s1, s1_2, s2, s3, s3_2, s4, s5, s6, s7
+  s1$out, s1_2$out, s2$out, s3$out, s3_2$out, s4$out, s5$out, s6$out, s7$out
 )
 
 write.xlsx(outall, paste0("./output/tabs/outefsub_", Sys.Date(), ".xlsx"), rowNames = FALSE)
-
 default_kable(outall,
   font_size = 6,
   caption = "Association between ablation and outcomes in EF subgroups"
 ) %>%
   add_header_above(c(" " = 1, " " = 1, "HFrEF" = 2, "HFmrEF" = 2, "HFpEF" = 2, " " = 1)) %>%
   landscape()
+```
+
+```{r forestoutef, dependson="outtabefsub", cache=cacheon}
+forestdata <- rbind(
+  s1$outforest, s1_2$outforest, s2$outforest, s3$outforest, s3_2$outforest,
+  s4$outforest, s5$outforest, s6$outforest, s7$outforest
+)
+
+forestdata <- forestdata %>%
+  mutate(
+    Outcome = str_replace_all(Outcome, "All-cause", "AC"),
+    Outcome = str_replace_all(Outcome, "HF hospitalization", "HFH"),
+    Outcome = str_replace_all(Outcome, "CV hospitalization", "CVH"),
+    Outcome = str_replace_all(Outcome, "TIA/Stroke hospitalization", "TIA/Stroke H"),
+    Outcome = str_replace_all(Outcome, "mortality", "death"),
+    order = n():1
+  )
+
+cextext <- 1
+
+minmy <- floor(exp(min(forestdata$lci, na.rm = T)) * 100) / 100
+# minmy <- 1
+maxmy <- ceiling(exp(max(forestdata$uci, na.rm = T)) * 10) / 10
+
+# c(bottom, left, top, right)
+par(mar = c(4, 8, 0, 12.5) + 0.2)
+
+
+plot(forestdata$loghr, forestdata$order,
+  cex = 1.5,
+  xlim = c(
+    log(minmy),
+    log(maxmy)
+  ),
+  xlab = "",
+  cex.lab = cextext,
+  ylim = c(1, max(forestdata$order) + .4),
+  axes = FALSE,
+  ylab = NA,
+  main = NA,
+  type = "p",
+  pch = 22,
+  bg = c(1, global_kicols[1:3]),
+  col = c(1, global_kicols[1:3]),
+  xaxs = "i"
+)
+
+for (i in 1:nrow(forestdata)) {
+  if (!is.na(forestdata$lci[i])) {
+    coltmp <- if_else(forestdata$Outcome[i] == " HFrEF", 1,
+      if_else(forestdata$Outcome[i] == " HFmrEF", 2, 3)
+    )
+    matplot(c(forestdata$lci[i], forestdata$uci[i]), c(forestdata$order[i], forestdata$order[i]),
+      type = "l", add = TRUE, col = global_kicols[1:3][coltmp], cex = 1
+    )
+    ## if lci < 1
+    # if (rev(forestdata$lci)[i] < log(minmy)) {
+    #  arrows(0.01, i, 0, i, col = global_kicols[coltmp], code = 2, length = 0.15)
+    # }
+  }
+}
+
+matplot(c(log(1), log(1)), c(-1, max(forestdata$order)), type = "l", lwd = 1, lty = 3, add = TRUE, col = 1)
+
+axismy <- c(minmy, 1, maxmy)
+axis(1,
+  cex.axis = cextext, at = log(axismy),
+  labels = axismy
+)
+axis(1,
+  cex.axis = cextext, at = log(1),
+  labels = 1
+)
+
+axis(2,
+  at = max(forestdata$order) + 1,
+  labels = "Outcome",
+  cex.axis = cextext, tick = FALSE, las = 2, line = 7, hadj = 0, font = 2
+)
+axis(2,
+  at = forestdata$order,
+  labels = forestdata$Outcome,
+  cex.axis = cextext, tick = FALSE, las = 2, line = 7, hadj = 0
+)
+
+axis(2,
+  at = max(forestdata$order) + 1,
+  labels = "HR/IRR (95% CI)",
+  cex.axis = cextext, tick = FALSE, las = 2, line = -19, hadj = 0.5, font = 2
+)
+axis(2,
+  at = forestdata$order,
+  labels = forestdata$hrprint,
+  cex.axis = cextext, tick = FALSE, las = 2, line = -19, hadj = 0.5
+)
+
+axis(2,
+  at = max(forestdata$order) + 1,
+  labels = "P interaction",
+  cex.axis = cextext, tick = FALSE, las = 1, line = -25, hadj = 0.5, font = 2
+)
+axis(2,
+  at = forestdata$order,
+  labels = forestdata$pint,
+  cex.axis = cextext, tick = FALSE, las = 1, line = -25, hadj = 0.5
+)
+
+axis(1,
+  at = log(1 - 0.1), cex.axis = cextext,
+  labels = "Ablation", line = 1, tick = FALSE, hadj = 1
+)
+axis(1,
+  at = log(1 + 0.1), cex.axis = cextext,
+  labels = "No ablation", line = 1, tick = FALSE, hadj = 0
+)
+axis(1,
+  at = log(1), cex.axis = cextext,
+  labels = "better", line = 2, tick = FALSE
+)
 ```
