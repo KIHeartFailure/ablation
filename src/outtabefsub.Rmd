@@ -205,7 +205,7 @@ default_kable(outall,
 
 ```{r forestoutef, dependson="outtabefsub", cache=cacheon}
 forestdata <- rbind(
-  s1$outforest, s1_2$outforest, s2$outforest, s3$outforest, s3_2$outforest,
+  s1$outforest, s2$outforest, s3$outforest, s3_2$outforest,
   s4$outforest, s5$outforest, s6$outforest, s7$outforest
 )
 
