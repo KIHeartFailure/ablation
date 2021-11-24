@@ -51,7 +51,7 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     )
 
     # c(bottom, left, top, right)
-    par(mar = c(8, 8.7, 0.5, 7.7) + 0.1)
+    par(mar = c(8, 7.3, 0.5, 4.7) + 0.1)
 
     plot(fit[1:2],
       ylab = eventname,
@@ -73,7 +73,7 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     )
   } else {
     # c(bottom, left, top, right)
-    par(mar = c(8, 8.7, 0.5, 7.7) + 0.1)
+    par(mar = c(8, 7.3, 0.5, 4.7) + 0.1)
 
     plots <- plot(fits,
       fun = "event",
@@ -118,7 +118,7 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
 
   ylabs <- bind_cols(
     ypos = c(ypos + yposplus),
-    ytext = c("No ablation all", "Ablation", "No ablation matched")
+    ytext = c("MT all", "Ablation", "MT matched")
   )
 
   mtext(
@@ -129,11 +129,11 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
     las = 1
   )
 
-  mtext("No. at risk", side = 1, line = 3, at = -860, adj = 0, cex = 1, font = 2)
-  mtext("No ablation all", side = 1, line = 4, at = -860, adj = 0, cex = 1)
-  mtext("Ablation all", side = 1, line = 5, at = -860, adj = 0, cex = 1)
-  mtext("No ablation matched", side = 1, line = 6, at = -860, adj = 0, cex = 1)
-  mtext("Ablation matched", side = 1, line = 7, at = -860, adj = 0, cex = 1)
+  mtext("No. at risk", side = 1, line = 3, at = -590, adj = 0, cex = 1, font = 2)
+  mtext("MT all", side = 1, line = 4, at = -590, adj = 0, cex = 1)
+  mtext("Ablation all", side = 1, line = 5, at = -590, adj = 0, cex = 1)
+  mtext("MT matched", side = 1, line = 6, at = -590, adj = 0, cex = 1)
+  mtext("Ablation matched", side = 1, line = 7, at = -590, adj = 0, cex = 1)
 
   nrisk <- summary(fits, seq(0, 5, 1) * 365)$n.risk
   nriskm <- summary(fitsm, seq(0, 5, 1) * 365)$n.risk
@@ -199,7 +199,7 @@ mcffunc <- function(datarec, datarecmatch, event, eventname, yposplus = rep(0, 3
   fitsm <- mcf(Recur(sos_outtime, LopNrablation, sos_out) ~ ablation, data = datarecmatch)
 
   # c(bottom, left, top, right)
-  par(mar = c(8, 8.7, 0.5, 7.7) + 0.1)
+  par(mar = c(8, 7.3, 0.5, 4.7) + 0.1)
 
   plot(fits@MCF$time[fits@MCF$ablation == "No"],
     fits@MCF$MCF[fits@MCF$ablation == "No"],
@@ -241,7 +241,7 @@ mcffunc <- function(datarec, datarecmatch, event, eventname, yposplus = rep(0, 3
 
   ylabs <- bind_cols(
     ypos = c(ypos + yposplus),
-    ytext = c("No ablation all", "Ablation", "No ablation matched")
+    ytext = c("MT all", "Ablation", "MT matched")
   )
 
   mtext(
@@ -252,11 +252,11 @@ mcffunc <- function(datarec, datarecmatch, event, eventname, yposplus = rep(0, 3
     las = 1
   )
 
-  mtext("No. at risk", side = 1, line = 3, at = -860, adj = 0, cex = 1, font = 2)
-  mtext("No ablation all", side = 1, line = 4, at = -860, adj = 0, cex = 1)
-  mtext("Ablation all", side = 1, line = 5, at = -860, adj = 0, cex = 1)
-  mtext("No ablation matched", side = 1, line = 6, at = -860, adj = 0, cex = 1)
-  mtext("Ablation matched", side = 1, line = 7, at = -860, adj = 0, cex = 1)
+  mtext("No. at risk", side = 1, line = 3, at = -590, adj = 0, cex = 1, font = 2)
+  mtext("MT all", side = 1, line = 4, at = -590, adj = 0, cex = 1)
+  mtext("Ablation all", side = 1, line = 5, at = -590, adj = 0, cex = 1)
+  mtext("MT matched", side = 1, line = 6, at = -590, adj = 0, cex = 1)
+  mtext("Ablation matched", side = 1, line = 7, at = -590, adj = 0, cex = 1)
 
   nrisk <- summary(fitsn, seq(0, 5, 1) * 365)$n.risk
   nriskm <- summary(fitsmn, seq(0, 5, 1) * 365)$n.risk

@@ -309,12 +309,12 @@ axis(2,
 )
 
 axis(1,
-  at = log(1 - 0.1), cex.axis = cextext,
+  at = log(1 - 0.2), cex.axis = cextext,
   labels = "Ablation", line = 1, tick = FALSE, hadj = 1
 )
 axis(1,
-  at = log(1 + 0.1), cex.axis = cextext,
-  labels = "No ablation", line = 1, tick = FALSE, hadj = 0
+  at = log(1 + 0.2), cex.axis = cextext,
+  labels = "MT", line = 1, tick = FALSE, hadj = 0
 )
 axis(1,
   at = log(1), cex.axis = cextext,
