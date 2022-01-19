@@ -16,8 +16,7 @@ tabvars <- c(
   "scb_famtype",
   "scb_dispincome_cat2",
 
-  "sos_com_afparoxysmal",
-  "sos_com_afpersistent",
+  "sos_com_aftype",
   "sos_comdur_af",
   "sos_comdur_af_cat",
   "sos_com_hypertension",
@@ -52,8 +51,7 @@ tabvars <- c(
 tabvars_not_in_mod <- c(
   "sos_comdur_af",
 
-  "sos_com_afparoxysmal",
-  "sos_com_afpersistent",
+  "sos_com_aftype",
 
   "chadsvasc",
   "chadsvasc_cat",

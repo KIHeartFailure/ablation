@@ -23,6 +23,12 @@ pop <- pop %>%
     levels = 1:4, labels = c("<0.5 years", "0.5-1 years", "1-3 years", ">3 years")
     ),
 
+    sos_com_aftype = case_when(
+      sos_com_afpersistent == "Yes" ~ "Persistent AF",
+      sos_com_afparoxysmal == "Yes" ~ "Paroxysmal AF",
+      TRUE ~ "Unclassified/Unknown"
+    ),
+
     # chadsvasc
     chadsvasc = 1 + # hf
       if_else(sos_com_hypertension == "Yes", 1, 0) +
