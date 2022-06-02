@@ -28,6 +28,8 @@ rsdata <- rsdata %>%
     ),
     shf_ef = factor(shf_ef, labels = c(">=50", "40-49", "30-39", "<30")),
 
+    shf_heartrate = coalesce(HEART_FREQUENCY_24H, HEART_FREQUENCY, HJARTFREKVENS),
+    
     # outcomes
     shf_deathdtm = coalesce(d_befdoddtm, befdoddtm),
     shf_deathdtm = if_else(shf_deathdtm > ymd("2018-12-31"), as.Date(NA), shf_deathdtm)
@@ -40,5 +42,6 @@ clean_outliers <- function(var, min, max) {
 
 rsdata <- rsdata %>%
   mutate(
-    shf_age = clean_outliers(shf_age, 0, 120)
+    shf_age = clean_outliers(shf_age, 0, 120),
+    shf_heartrate = clean_outliers(shf_heartrate, 20, 300)
   )

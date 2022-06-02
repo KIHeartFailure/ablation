@@ -6,11 +6,10 @@ mod <- summary(coxph(formula(paste0("Surv(sos_outtime_hosphf, sos_out_deathhosph
 
 evalc <- evalue(HR(mod$conf.int[1, 1], rare = FALSE), lo = mod$conf.int[1, 3], hi = mod$conf.int[1, 4])
 
-
-modm <- coxme(Surv(sos_outtime_hosphf, sos_out_deathhosphf == "Yes") ~ ablation + (1 | par),
+modm <- coxph(Surv(sos_outtime_hosphf, sos_out_deathhosphf == "Yes") ~ ablation + frailty(par, distribution = "gamma"),
   data = matchpop
 )
-se <- sqrt(vcov(modm)[1])
+se <- sqrt(modm$var)[1]
 
 evalm <- evalue(HR(exp(modm$coefficients[1]), rare = FALSE),
   lo = exp(modm$coefficients[1] - global_z05 * se),

@@ -15,10 +15,33 @@ pop <- left_join(
 
 lisa <- lisa %>%
   mutate(
+    scb_region = case_when(
+      Lan == "01" ~ "Stockholm",
+      Lan == "03" ~ "Uppsala",
+      Lan == "04" ~ "Sodermanland",
+      Lan == "05" ~ "Ostergotland",
+      Lan == "06" ~ "Jonkoping",
+      Lan == "07" ~ "Kronoberg",
+      Lan == "08" ~ "Kalmar",
+      Lan == "09" ~ "Gotland",
+      Lan == "10" ~ "Blekinge",
+      Lan == "12" ~ "Skane",
+      Lan == "13" ~ "Halland",
+      Lan == "14" ~ "Vastra Gotaland",
+      Lan == "17" ~ "Varmland",
+      Lan == "18" ~ "Orebro",
+      Lan == "19" ~ "Vastmanland",
+      Lan == "20" ~ "Dalarna",
+      Lan == "21" ~ "Gavleborg",
+      Lan == "22" ~ "Vasternorrland",
+      Lan == "23" ~ "Jamtland",
+      Lan == "24" ~ "Vasterbotten",
+      Lan == "25" ~ "Norrbotten"),
     scb_famtype = case_when(
       FamTypF %in% c(11, 12, 13, 21, 22, 23, 31, 32, 41, 42) ~ "Cohabitating",
       FamTypF %in% c(50, 60) ~ "Living alone"
     ),
+    Sun2000niva_old = coalesce(Sun2000niva_old, Sun2000niva_Old), 
     scb_education = case_when(
       Sun2000niva_old %in% c(1, 2) ~ "Compulsory school",
       Sun2000niva_old %in% c(3, 4) ~ "Secondary school",
@@ -27,25 +50,6 @@ lisa <- lisa %>%
     scb_dispincome = coalesce(DispInk04, DispInk)
   ) %>%
   select(LopNr, year, starts_with("scb_"))
-
-# no values for education available for 2018 (baseline values for patients with indexyear 2019)
-# so assumed same education 2018 as 2017
-
-lisaeducation2017 <- lisa %>%
-  filter(year == 2017) %>%
-  mutate(
-    edyear = 2018,
-    scb_educationimp = scb_education
-  ) %>%
-  select(LopNr, scb_educationimp, edyear)
-
-lisa <- left_join(lisa,
-  lisaeducation2017,
-  by = c("LopNr" = "LopNr", "year" = "edyear")
-) %>%
-  mutate(scb_education = coalesce(scb_education, scb_educationimp)) %>%
-  select(-scb_educationimp)
-
 
 pop <- left_join(
   pop,

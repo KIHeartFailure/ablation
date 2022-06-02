@@ -26,6 +26,11 @@ ProjectTemplate::cache("matchingn")
 
 ProjectTemplate::cache("pop")
 ProjectTemplate::cache("matchpop")
+ProjectTemplate::cache("matchpop_excl_unsaf")
+ProjectTemplate::cache("matchpop_aad")
+ProjectTemplate::cache("matchpop_rc")
+ProjectTemplate::cache("matchpop_heartrate")
+ProjectTemplate::cache("matchpop_excl_sotdis")
 
 ProjectTemplate::cache("pop_rec_hosphf")
 ProjectTemplate::cache("matchpop_rec_hosphf")

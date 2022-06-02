@@ -104,9 +104,6 @@ comparisons were made and therefore the results should be viewed with care.
 
 ## Missing data
 
-For patients included in 2019 baseline data for education (2018) was not available, 
-in these cases the value from the previous year (2017) is carried forward. 
-
 The loss of patients due to missing data for the variables included in the models was small, `r paste0(pop %>% 
          mutate(anyna = factor(if_else(rowSums(is.na(select(., !!!syms(modvars)))) > 0, "Yes", "No"))) %>%
          group_by(ablation) %>%
@@ -122,7 +119,8 @@ The loss of patients due to missing data for the variables included in the model
 
 A propensity score for ablation was estimated for each patient with 
 logistic regression using the variables 
-indicated in Table \ref{tab:tab1}. 1:2 matching without replacement [@match] 
+indicated in Table \ref{tab:tab1} and county of residence. 
+1:2 matching without replacement [@match] 
 was thereafter performed, where matching was 
 allowed if the propensity score differed by 0.01 or less. The ability of the 
 propensity score matching to balance the baseline characteristics was assessed by 
@@ -138,6 +136,10 @@ retained and balance between groups. Other matching ratios: `r matchingn`.
 
 ```
 
+```{r, child = "../src/chadsvascoral.Rmd"}
+
+```
+
 ## Assocations with outcomes
 
 Data were censored at 2019-12-31, death, emigration, or, for the controls, ablation for AF. 
@@ -148,8 +150,8 @@ The mean cumulative function (MCF) was used to depict the recurrent events.
 
 Cox proportional hazards regressions were 
 used to model the time to first event, partly crude and partly adjusted for variables indicated in 
-Table \ref{tab:tab1}. The variables were selected based on clinical relevance. 
-Adjustment was performed partly by including the variables as individual covariates directly 
+Table \ref{tab:tab1} and county of residence. The variables were selected based on clinical 
+relevance. Adjustment was performed partly by including the variables as individual covariates directly 
 in the model, and partly using the propensity score matched cohort. 
 In the latter a frailty term was included to model the dependence between matched pairs. 
 
@@ -157,10 +159,18 @@ As a consistency analysis, outcomes not including all-cause mortality were model
 using a sub-distributional hazards model [@fg] 
 where death was treated as a competing event. 
 
+For the primary outcome the following consistency analyses were also performed: 
+
+- excluding patients with unclassified/unknown AF from the analysis
+- with controls defined as taking AAD
+- with controls defined as taking ratecontrol/bbl/digoxin and no AAD
+- including heartrate from the SwedeHF registration in the model 
+- excluding patients taking sotalol or disopyramid from the analysis
+
+using propensity score matching in a similar manner as the main analysis. 
+
 Recurrent events were model using a negative binomial generalized linear model 
 including the log of time as an offset in the model, crude and adjusted as above. 
-For the matched data a generalized linear mixed-effects model (GLMMM) for the negative binomial family 
-was used in order to incorporate matched pairs as a random effect. 
 
 ### Assumptions
 

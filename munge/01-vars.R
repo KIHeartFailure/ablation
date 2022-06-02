@@ -9,6 +9,7 @@ tabvars <- c(
   "indexyear",
 
   "shf_ef_cat",
+  "shf_heartrate",
 
   # socec
   "scb_education",
@@ -44,19 +45,23 @@ tabvars <- c(
   "sos_ddr_antiplatlet",
   "sos_ddr_oralanticoagulant",
   "sos_ddr_lipidlowering",
-  "sos_ddr_sglt2i_glp1a"
+  "sos_ddr_sglt2i_glp1a", 
+  "sos_ddr_sotalol", 
+  "sos_ddr_disopyramid" 
 )
 
 # vars fox log reg and cox reg
 tabvars_not_in_mod <- c(
+  "shf_heartrate",
+  
   "sos_comdur_af",
-
-  "sos_com_aftype",
 
   "chadsvasc",
   "chadsvasc_cat",
 
-  "sos_ddr_sglt2i_glp1a"
+  "sos_ddr_sglt2i_glp1a",
+  "sos_ddr_sotalol", 
+  "sos_ddr_disopyramid"
 )
 
-modvars <- c(tabvars[!(tabvars %in% tabvars_not_in_mod)])
+modvars <- c(tabvars[!(tabvars %in% tabvars_not_in_mod)], "scb_region")

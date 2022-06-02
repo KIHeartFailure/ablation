@@ -85,7 +85,7 @@ footnote(
   symbol = c(
     "Medium within index year",
     "Within 9 years prior to index",
-    "Included in propensity score/cox regression models"
+    "Included in propensity score/regression models together with county of residence"
   )
 )
 ```

@@ -1,6 +1,6 @@
 ```{r km, cache=cacheon}
 
-kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3)) {
+kmfunc <- function(time, event, eventcr = NULL, eventname, lplace = c(3 * 365, 0.22)) {
 
   # cox for print
   ## crude
@@ -15,17 +15,15 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
   )
 
   ## adjusted
-  mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + (1 | par)")),
+  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation + frailty(par, distribution = 'gamma')")),
     data = matchpop
-  )
-
-  se <- sqrt(vcov(mod)[1])
+  ))
 
   ap <- paste0(
-    fn(exp(mod$coefficients[1]), dig = 2),
-    " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
-    "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
-    fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
+    fn(mod$conf.int[1, 1], dig = 2),
+    " (", fn(mod$conf.int[1, 3], dig = 2),
+    "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
+    fn(mod$coef[1, "p"], dig = 3, p = TRUE)
   )
 
   # and the curves...
@@ -35,6 +33,11 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
   fitsm <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation")),
     data = matchpop
   ) # needed also for cuminc for n at risk
+
+  cexmy <- 1.1
+
+  # c(bottom, left, top, right)
+  par(mar = c(8, 9.5, 0.5, 1.5) + 0.1)
 
   if (!is.null(eventcr)) {
     fit <- cuminc(
@@ -50,37 +53,32 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
       group = matchpop %>% pull(ablation)
     )
 
-    # c(bottom, left, top, right)
-    par(mar = c(8, 7.3, 0.5, 4.7) + 0.1)
-
     plot(fit[1:2],
       ylab = eventname,
-      col = global_kicols,
+      col = global_cols[c(1, 5)],
       wh = c(1110, 1110),
       xlim = c(0, 5 * 365),
       ylim = c(0, 1),
       xlab = "Years",
       axes = F,
       lwd = 3,
-      lty = c(1, 2),
-      xaxs = "i", yaxs = "i"
+      lty = c(3, 1),
+      xaxs = "i", yaxs = "i",
+      cex.lab = cexmy
     )
     lines(fitm$`No 1`$time,
       fitm$`No 1`$est,
-      col = global_kicols[3],
+      col = global_cols[3],
       lwd = 3,
-      lty = 3
+      lty = 2
     )
   } else {
-    # c(bottom, left, top, right)
-    par(mar = c(8, 7.3, 0.5, 4.7) + 0.1)
-
     plots <- plot(fits,
       fun = "event",
       ylab = eventname,
       xscale = 365,
       yscale = 100,
-      col = global_kicols,
+      col = global_cols[c(1, 5)],
       mark.time = FALSE,
       bty = "n",
       xlim = c(0, 5 * 365),
@@ -88,73 +86,57 @@ kmfunc <- function(time, event, eventcr = NULL, eventname, yposplus = rep(0, 3))
       xlab = "Years",
       axes = F,
       lwd = 3,
-      lty = c(1, 2),
-      xaxs = "i", yaxs = "i"
+      lty = c(3, 1),
+      xaxs = "i", yaxs = "i",
+      cex.lab = cexmy
     )
     lines(fitsm[1],
       fun = "event",
       xscale = 365,
       yscale = 100,
-      col = global_kicols[3:4],
+      col = global_cols[3],
       mark.time = FALSE,
       conf.int = FALSE,
       lwd = 3,
-      lty = c(3, 4),
+      lty = 2,
       xaxs = "i", yaxs = "i"
     )
   }
 
-  axis(2, seq(0, 1, 0.25), seq(0, 100, 25), las = 2)
-  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1))
+  axis(2, seq(0, 1, 0.25), seq(0, 100, 25), las = 2, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1), cex.axis = cexmy)
 
-  if (!is.null(eventcr)) {
-    ypos <- timepoints(fit[1:2], 364.5 * 5)$est
-    yposm <- timepoints(fitm[1:2], 364.5 * 5)$est[1]
-  } else {
-    ypos <- 1 - summary(fits, 364.5 * 5)$surv
-    yposm <- 1 - summary(fitsm, 364.5 * 5)$surv[1]
-  }
-  ypos <- c(ypos, yposm)
-
-  ylabs <- bind_cols(
-    ypos = c(ypos + yposplus),
-    ytext = c("MT all", "Ablation", "MT matched")
+  legend(
+    x = lplace[1], y = lplace[2], c("No ablation all", "No ablation matched", "Ablation"), bty = "n",
+    lty = c(3, 2, 1), lwd = 3, col = global_cols[c(1, 3, 5)], cex = cexmy
   )
 
-  mtext(
-    side = 4,
-    line = .2,
-    at = ylabs$ypos,
-    ylabs$ytext,
-    las = 1
-  )
-
-  mtext("No. at risk", side = 1, line = 3, at = -590, adj = 0, cex = 1, font = 2)
-  mtext("MT all", side = 1, line = 4, at = -590, adj = 0, cex = 1)
-  mtext("Ablation all", side = 1, line = 5, at = -590, adj = 0, cex = 1)
-  mtext("MT matched", side = 1, line = 6, at = -590, adj = 0, cex = 1)
-  mtext("Ablation matched", side = 1, line = 7, at = -590, adj = 0, cex = 1)
+  mtext("No. at risk", side = 1, line = 3, at = -510, adj = 0, font = 2, cex = cexmy)
+  mtext("No ablation all", side = 1, line = 4, at = -510, adj = 0, cex = cexmy)
+  mtext("Ablation all", side = 1, line = 5, at = -510, adj = 0, cex = cexmy)
+  mtext("No ablation matched", side = 1, line = 6, at = -510, adj = 0, cex = cexmy)
+  mtext("Ablation matched", side = 1, line = 7, at = -510, adj = 0, cex = cexmy)
 
   nrisk <- summary(fits, seq(0, 5, 1) * 365)$n.risk
   nriskm <- summary(fitsm, seq(0, 5, 1) * 365)$n.risk
 
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[1:6], line = 3, tick = FALSE, cex.axis = 1)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[7:12], line = 4, tick = FALSE, cex.axis = 1)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[1:6], line = 5, tick = FALSE, cex.axis = 1)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[7:12], line = 6, tick = FALSE, cex.axis = 1)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[1:6], line = 3, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[7:12], line = 4, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[1:6], line = 5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[7:12], line = 6, tick = FALSE, cex.axis = cexmy)
 
-  text(0, 0.90, "Crude:", pos = 4)
-  text(0, 0.85, "Adjusted:", pos = 4)
+  text(250, 0.90, "Crude:", pos = 4, cex = cexmy)
+  text(250, 0.85, "Adjusted:", pos = 4, cex = cexmy)
 
-  text(380, 0.95, "HR (95% CI), p-value", pos = 4)
-  text(380, 0.90, cp, pos = 4)
-  text(380, 0.85, ap, pos = 4)
+  text(480, 0.95, "HR (95% CI), p-value", pos = 4, cex = cexmy)
+  text(480, 0.90, cp, pos = 4, cex = cexmy)
+  text(480, 0.85, ap, pos = 4, cex = cexmy)
 }
 ```
 
 ```{r mcf, cache=cacheon}
 
-mcffunc <- function(datarec, datarecmatch, event, eventname, yposplus = rep(0, 3)) {
+mcffunc <- function(datarec, datarecmatch, event, eventname, lplace = c(3 * 365, 0.5)) {
 
   # neg bin for print
   ## crude
@@ -162,20 +144,17 @@ mcffunc <- function(datarec, datarecmatch, event, eventname, yposplus = rep(0, 3
     data = pop %>% filter(sos_outtime_death > 0)
   ))
 
-  cp <-
-    paste0(
-      fn(exp(mod$coefficients[2, 1]), dig = 2),
-      " (", fn(exp(mod$coefficients[2, 1] - global_z05 * mod$coefficients[2, 2]), dig = 2),
-      "-", fn(exp(mod$coefficients[2, 1] + global_z05 * mod$coefficients[2, 2]), dig = 2), "), ",
-      fn(mod$coefficients[2, 4], dig = 3, p = TRUE)
-    )
+  cp <- paste0(
+    fn(exp(mod$coefficients[2, 1]), dig = 2),
+    " (", fn(exp(mod$coefficients[2, 1] - global_z05 * mod$coefficients[2, 2]), dig = 2),
+    "-", fn(exp(mod$coefficients[2, 1] + global_z05 * mod$coefficients[2, 2]), dig = 2), "), ",
+    fn(mod$coefficients[2, 4], dig = 3, p = TRUE)
+  )
 
   ## adjusted match
-  mod <- summary(lme4::glmer.nb(formula(paste0(event, " ~ ablation + (1 | par) + offset(log(sos_outtime_death))")),
+  mod <- summary(glm.nb(formula(paste0(event, " ~ ablation + offset(log(sos_outtime_death))")),
     data = matchpop %>% filter(sos_outtime_death > 0)
   ))
-
-  se <- sqrt(vcov(mod)[1])
 
   ap <- paste0(
     fn(exp(mod$coefficients[2, "Estimate"]), 2),
@@ -199,156 +178,139 @@ mcffunc <- function(datarec, datarecmatch, event, eventname, yposplus = rep(0, 3
   fitsm <- mcf(Recur(sos_outtime, LopNrablation, sos_out) ~ ablation, data = datarecmatch)
 
   # c(bottom, left, top, right)
-  par(mar = c(8, 7.3, 0.5, 4.7) + 0.1)
+  par(mar = c(8, 9.5, 0.5, 1.5) + 0.1)
+
+  cexmy <- 1.1
 
   plot(fits@MCF$time[fits@MCF$ablation == "No"],
     fits@MCF$MCF[fits@MCF$ablation == "No"],
     type = "l",
     ylab = eventname,
-    col = global_kicols[1],
+    col = global_cols[1],
     xlim = c(0, 5 * 365),
     ylim = c(0, 2),
     xlab = "Years",
     axes = F,
     lwd = 3,
-    lty = 1,
-    xaxs = "i", yaxs = "i"
+    lty = 3,
+    xaxs = "i", yaxs = "i",
+    cex.lab = cexmy
   )
 
   lines(fits@MCF$time[fits@MCF$ablation == "Yes"],
     fits@MCF$MCF[fits@MCF$ablation == "Yes"],
-    col = global_kicols[2],
+    col = global_cols[5],
     lwd = 3,
-    lty = 2
+    lty = 1
   )
 
   lines(fitsm@MCF$time[fitsm@MCF$ablation == "No"],
     fitsm@MCF$MCF[fitsm@MCF$ablation == "No"],
-    col = global_kicols[3],
+    col = global_cols[3],
     lwd = 3,
-    lty = 3
+    lty = 2
   )
 
-  axis(2, seq(0, 2, .5), seq(0, 200, 50), las = 2)
-  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1))
+  axis(2, seq(0, 2, .5), seq(0, 200, 50), las = 2, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1), cex.axis = cexmy)
 
-  # all no, all yes, no match
-  ypos <- c(
-    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$ablation == "No"]),
-    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$ablation == "Yes"]),
-    last(fitsm@MCF$MCF[fitsm@MCF$time <= 365 * 5 & fitsm@MCF$ablation == "No"])
+  legend(
+    x = lplace[1], y = lplace[2], c("No ablation all", "No ablation matched", "Ablation"), bty = "n",
+    lty = c(3, 2, 1), lwd = 3, col = global_cols[c(1, 3, 5)], cex = cexmy
   )
 
-  ylabs <- bind_cols(
-    ypos = c(ypos + yposplus),
-    ytext = c("MT all", "Ablation", "MT matched")
-  )
-
-  mtext(
-    side = 4,
-    line = .2,
-    at = ylabs$ypos,
-    ylabs$ytext,
-    las = 1
-  )
-
-  mtext("No. at risk", side = 1, line = 3, at = -590, adj = 0, cex = 1, font = 2)
-  mtext("MT all", side = 1, line = 4, at = -590, adj = 0, cex = 1)
-  mtext("Ablation all", side = 1, line = 5, at = -590, adj = 0, cex = 1)
-  mtext("MT matched", side = 1, line = 6, at = -590, adj = 0, cex = 1)
-  mtext("Ablation matched", side = 1, line = 7, at = -590, adj = 0, cex = 1)
+  mtext("No. at risk", side = 1, line = 3, at = -510, adj = 0, cex = cexmy, font = 2)
+  mtext("No ablation all", side = 1, line = 4, at = -510, adj = 0, cex = cexmy)
+  mtext("Ablation all", side = 1, line = 5, at = -510, adj = 0, cex = cexmy)
+  mtext("No ablation matched", side = 1, line = 6, at = -510, adj = 0, cex = cexmy)
+  mtext("Ablation matched", side = 1, line = 7, at = -510, adj = 0, cex = cexmy)
 
   nrisk <- summary(fitsn, seq(0, 5, 1) * 365)$n.risk
   nriskm <- summary(fitsmn, seq(0, 5, 1) * 365)$n.risk
 
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[1:6], line = 3, tick = FALSE, cex.axis = 1)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[7:12], line = 4, tick = FALSE, cex.axis = 1)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[1:6], line = 5, tick = FALSE, cex.axis = 1)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[7:12], line = 6, tick = FALSE, cex.axis = 1)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[1:6], line = 3, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk[7:12], line = 4, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[1:6], line = 5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nriskm[7:12], line = 6, tick = FALSE, cex.axis = cexmy)
 
-  text(0, 1.80, "Crude:", pos = 4)
-  text(0, 1.70, "Adjusted:", pos = 4)
+  text(250, 1.80, "Crude:", pos = 4, cex = cexmy)
+  text(250, 1.70, "Adjusted:", pos = 4, cex = cexmy)
 
-  text(380, 1.90, "IRR (95% CI), p-value", pos = 4)
-  text(380, 1.80, cp, pos = 4)
-  text(380, 1.70, ap, pos = 4)
+  text(480, 1.90, "IRR (95% CI), p-value", pos = 4, cex = cexmy)
+  text(480, 1.80, cp, pos = 4, cex = cexmy)
+  text(480, 1.70, ap, pos = 4, cex = cexmy)
 }
 ```
 
-```{r kmdeathhosphf, fig.cap="All-cause mortality/first HF hospitalization", cache=cacheon, dependson="km"}
+```{r kmdeathhosphf, fig.cap="All-cause mortality/first HF hospitalization", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_deathhosphf",
-  eventname = "All-cause mortality/first HF hospitalization (%)",
-  yposplus = c(0, 0, 0)
+  eventname = "All-cause mortality/first HF hospitalization (%)"
 )
 ```
 
-```{r kmdeath, fig.cap="All-cause mortality", cache=cacheon, dependson="km"}
+```{r kmdeath, fig.cap="All-cause mortality", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_death",
   event = "sos_out_death",
   eventname = "All-cause mortality (%)",
-  yposplus = c(0, 0, 0)
+  lplace = c(3 * 365, 0.19)
 )
 ```
 
-```{r kmhosphf, fig.cap="First HF hospitalization", cache=cacheon, dependson="km"}
+```{r kmhosphf, fig.cap="First HF hospitalization", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_hosphf",
   eventcr = "sos_out_hosphf_cr",
-  eventname = "First HF hospitalization (%)",
-  yposplus = c(0.005, 0, -0.005)
+  eventname = "First HF hospitalization (%)"
 )
 ```
 
-```{r kmrechosphf, fig.cap="Recurent HF hospitalization", cache=cacheon, dependson="mcf"}
+```{r kmrechosphf, fig.cap="Recurent HF hospitalization", cache=cacheon, dependson="mcf", fig.width=9, fig.height=7}
 mcffunc(
   datarec = pop_rec_hosphf,
   datarecmatch = matchpop_rec_hosphf,
   event = "sos_out_nohosphf",
-  eventname = "Cumulative mean of HF hospitalizations (per 100 patients)",
-  yposplus = c(0.025, -0.025, 0)
+  eventname = "Cumulative mean of HF hospitalizations (per 100 patients)"
 )
 ```
 
-```{r kmhospstroketia, fig.cap="First TIA/Stroke hospitalization", cache=cacheon, dependson="km"}
+```{r kmhospstroketia, fig.cap="First TIA/Stroke hospitalization", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_hospstroketia",
   event = "sos_out_hospstroketia",
   eventcr = "sos_out_hospstroketia_cr",
   eventname = "First TIA/Stroke hospitalization (%)",
-  yposplus = c(0, -0.01, 0.01) # no all, yes, no matched
+  lplace = c(3 * 365, 0.35)
 )
 ```
 
-```{r kmdeathcv, fig.cap="CV mortality", cache=cacheon, dependson="km"}
+```{r kmdeathcv, fig.cap="CV mortality", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_death",
   event = "sos_out_deathcv",
   eventcr = "sos_out_deathcv_cr",
   eventname = "CV mortality (%)",
-  yposplus = c(0, 0, 0) # no all, yes, no matched
+  lplace = c(3 * 365, 0.6)
 )
 ```
 
-```{r kmhospcv, fig.cap="First CV hospitalization", cache=cacheon, dependson="km"}
+```{r kmhospcv, fig.cap="First CV hospitalization", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_hospcv",
   event = "sos_out_hospcv",
   eventcr = "sos_out_hospcv_cr",
-  eventname = "First CV hospitalization (%)",
-  yposplus = c(-0.005, 0, 0.005) # no all, yes, no matched
+  eventname = "First CV hospitalization (%)"
 )
 ```
 
-```{r kmhospany, fig.cap="First hospitalization", cache=cacheon, dependson="km"}
+```{r kmhospany, fig.cap="First hospitalization", cache=cacheon, dependson="km", fig.width=9, fig.height=7}
 kmfunc(
   time = "sos_outtime_hospany",
   event = "sos_out_hospany",
   eventcr = "sos_out_hospany_cr",
-  eventname = "First hospitalization (%)",
-  yposplus = c(0, 0, 0)
+  eventname = "First hospitalization (%)"
 )
 ```

@@ -40,6 +40,18 @@ pop <- pop %>%
       if_else(shf_sex == "Female", 1, 0),
 
     chadsvasc_cat = factor(if_else(chadsvasc < 2, 1, 2), levels = 1:2, labels = c("<2", ">=2")),
+    chadsvasc_cat3 = factor(case_when(
+      chadsvasc < 2 ~ 1,
+      chadsvasc < 3 ~ 2,
+      chadsvasc >= 3 ~ 3
+    ),
+    levels = 1:3, labels = c("1", "2", ">=3")
+    ),
+
+    sos_ddr_ratecontrolbbldigoxin = if_else(sos_ddr_aad == "No" &
+      (sos_ddr_ratecontrol == "Yes" | sos_ddr_bbl == "Yes" | sos_ddr_digoxin == "Yes"),
+    "Yes", "No"
+    ),
 
     # combined outcomes
     sos_out_deathhosphf = case_when(

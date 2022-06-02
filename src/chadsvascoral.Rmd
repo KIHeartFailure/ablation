@@ -1,0 +1,231 @@
+```{r chadsvascoral, cache=cacheon}
+
+# all pop
+tab1 <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = pop,
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1 <- as_tibble(cbind(var = rownames(tab1), tab1))
+
+# match pop
+tab1m <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = matchpop,
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1m <- as_tibble(cbind(var = rownames(tab1m), tab1m))
+
+tab1 <- bind_cols(tab1, tab1m %>% select(-var, -level), .name_repair = "unique") %>%
+  mutate(var = sanitize_text(var))
+
+## fix in order to use escape = TRUE
+colnames(tab1) <- sanitize_text(c("Variable", "Level", rep(c("No ablation", "Ablation"), 6)))
+
+footnote(
+  default_kable(tab1,
+    font_size = 3.5,
+    caption = "Oral anticoagulation and CHADS2VASc",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    add_header_above(c(
+      " " = 1, " " = 1, "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2,
+      "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2
+    )) %>%
+    add_header_above(c(" " = 1, " " = 1, "All" = 6, "Matched" = 6)),
+  general = "All CHADS2VASc 0-1 will by defintion be Male (1 point for HF and 1 point for Female)."
+)
+```
+
+```{r chadsvascoralref, cache=cacheon}
+
+# all pop
+tab1 <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = pop %>% filter(shf_ef_cat == "HFrEF"),
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1 <- as_tibble(cbind(var = rownames(tab1), tab1))
+
+# match pop
+tab1m <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = matchpop %>% filter(shf_ef_cat == "HFrEF"),
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1m <- as_tibble(cbind(var = rownames(tab1m), tab1m))
+
+tab1 <- bind_cols(tab1, tab1m %>% select(-var, -level), .name_repair = "unique") %>%
+  mutate(var = sanitize_text(var))
+
+## fix in order to use escape = TRUE
+colnames(tab1) <- sanitize_text(c("Variable", "Level", rep(c("No ablation", "Ablation"), 6)))
+
+footnote(
+  default_kable(tab1,
+    font_size = 3.5,
+    caption = "Oral anticoagulation and CHADS2VASc HFrEF",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    add_header_above(c(
+      " " = 1, " " = 1, "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2,
+      "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2
+    )) %>%
+    add_header_above(c(" " = 1, " " = 1, "All" = 6, "Matched" = 6)),
+  general = "All CHADS2VASc 0-1 will by defintion be Male (1 point for HF and 1 point for Female)."
+)
+```
+
+```{r chadsvascoralmref, cache=cacheon}
+
+# all pop
+tab1 <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = pop %>% filter(shf_ef_cat == "HFmrEF"),
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1 <- as_tibble(cbind(var = rownames(tab1), tab1))
+
+# match pop
+tab1m <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = matchpop %>% filter(shf_ef_cat == "HFmrEF"),
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1m <- as_tibble(cbind(var = rownames(tab1m), tab1m))
+
+tab1 <- bind_cols(tab1, tab1m %>% select(-var, -level), .name_repair = "unique") %>%
+  mutate(var = sanitize_text(var))
+
+## fix in order to use escape = TRUE
+colnames(tab1) <- sanitize_text(c("Variable", "Level", rep(c("No ablation", "Ablation"), 6)))
+
+footnote(
+  default_kable(tab1,
+    font_size = 3.5,
+    caption = "Oral anticoagulation and CHADS2VASc HFmrEF",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    add_header_above(c(
+      " " = 1, " " = 1, "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2,
+      "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2
+    )) %>%
+    add_header_above(c(" " = 1, " " = 1, "All" = 6, "Matched" = 6)),
+  general = "All CHADS2VASc 0-1 will by defintion be Male (1 point for HF and 1 point for Female)."
+)
+```
+
+```{r chadsvascoralpef, cache=cacheon}
+
+# all pop
+tab1 <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = pop %>% filter(shf_ef_cat == "HFpEF"),
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1 <- as_tibble(cbind(var = rownames(tab1), tab1))
+
+# match pop
+tab1m <- print(CreateTableOne(
+  vars = "sos_ddr_oralanticoagulant",
+  data = matchpop %>% filter(shf_ef_cat == "HFpEF"),
+  strata = c("ablation", "chadsvasc_cat3")
+),
+printToggle = FALSE,
+nonnormal = tabvars,
+catDigits = 1,
+contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+showAllLevels = TRUE,
+test = F
+)
+tab1m <- as_tibble(cbind(var = rownames(tab1m), tab1m))
+
+tab1 <- bind_cols(tab1, tab1m %>% select(-var, -level), .name_repair = "unique") %>%
+  mutate(var = sanitize_text(var))
+
+## fix in order to use escape = TRUE
+colnames(tab1) <- sanitize_text(c("Variable", "Level", rep(c("No ablation", "Ablation"), 6)))
+
+footnote(
+  default_kable(tab1,
+    font_size = 3.5,
+    caption = "Oral anticoagulation and CHADS2VASc HFpEF",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    add_header_above(c(
+      " " = 1, " " = 1, "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2,
+      "CHADS2VASc 1" = 2, "CHADS2VASc 2" = 2, "CHADS2VASc >=3" = 2
+    )) %>%
+    add_header_above(c(" " = 1, " " = 1, "All" = 6, "Matched" = 6)),
+  general = "All CHADS2VASc 0-1 will by defintion be Male (1 point for HF and 1 point for Female)."
+)
+```

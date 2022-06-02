@@ -37,12 +37,30 @@ ablationpop <- ablationpop %>%
   filter(!diaex1 & !diaex2)
 flowcase <- rbind(flowcase, c("Ablation post does NOT have I456, I47, I493, I494, I489C-F in BDIA01-BDIAXX", nrow(ablationpop)))
 
-ablationpop <- left_join(ablationpop %>%
-  select(LopNr, sos_ablationdtm),
-ablationbase %>%
-  filter(opex) %>%
-  select(LopNr, INDATUM),
-by = "LopNr"
+# check for rev
+ablationpopcheck <- inner_join(
+  ablationpop,
+  rsdata %>%
+    filter(!is.na(shf_ef)) %>%
+    select(LopNr, shf_indexdtm, shf_sex, shf_age, shf_ef),
+  by = "LopNr"
+) %>%
+  mutate(diff = as.numeric(sos_ablationdtm - shf_indexdtm)) %>%
+  filter(diff <= 365, diff >= 0) %>%
+  group_by(LopNr) %>%
+  arrange(diff) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(-diff)
+
+# original flow
+ablationpop <- left_join(
+  ablationpop %>%
+    select(LopNr, sos_ablationdtm),
+  ablationbase %>%
+    filter(opex) %>%
+    select(LopNr, INDATUM),
+  by = "LopNr"
 ) %>%
   mutate(diff = as.numeric(INDATUM - sos_ablationdtm)) %>%
   filter(is.na(diff) | diff <= -30.5 * 3 | diff > 0) %>%
@@ -59,7 +77,7 @@ flowcase <- rbind(flowcase, c("Ablation post does NOT have procedure FPE00, FPE2
 ablationpop <- inner_join(ablationpop,
   rsdata %>%
     filter(!is.na(shf_ef)) %>%
-    select(LopNr, shf_indexdtm, shf_sex, shf_age, shf_ef),
+    select(LopNr, shf_indexdtm, shf_sex, shf_age, shf_ef, shf_heartrate),
   by = "LopNr"
 ) %>%
   mutate(diff = as.numeric(sos_ablationdtm - shf_indexdtm)) %>%
@@ -71,3 +89,6 @@ ablationpop <- inner_join(ablationpop,
   select(-diff)
 
 flowcase <- rbind(flowcase, c("Ablation post has a registration in SwedeHF with non-missing EF with index date within 1 year prior", nrow(ablationpop)))
+
+# add to flowchart 
+flowcase <- rbind(flowcase, c(". Number of patients if do not exclude due to procedure FPE00, FPE20 within 3 months prior (rev comment)", nrow(ablationpopcheck)))

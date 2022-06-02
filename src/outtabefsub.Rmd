@@ -10,7 +10,7 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
 
   colnames(outforest) <- c("Outcome", "loghr", "lci", "uci", "hrprint", "pint")
   outforest[1, 1] <- eventname
-  outforest[2:4, 1] <- paste0(" ", levsef)
+  outforest[2:4, 1] <- paste0("  ", levsef)
 
   ## incidence rate
   out[1, 2] <- "No events, sum py, incidence rate/100py (95% CI)"
@@ -57,30 +57,32 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
     if (!rep) {
       out[2, 2] <- "Adjusted ps matched HR (95% CI), p-value"
       ## adjusted match
-      mod <- coxme(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ ablation * relevel(shf_ef_cat, ref = '", levsef[i], "') + (1 | par)")),
-        data = matchpop
-      )
 
-      se <- sqrt(vcov(mod)[1])
-
-      out[2, row:(row + 1)] <- c("ref", paste0(
-        fn(exp(mod$coefficients[1]), dig = 2),
-        " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
-        "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), "), ",
-        fn((1 - pnorm(abs(mod$coeff[1] / se))) * 2, dig = 3, p = TRUE)
+      mod <- summary(mod2 <- coxph(formula(paste0(
+        "Surv(", time, ",", event, "=='Yes') ~ ablation * relevel(shf_ef_cat, ref = '",
+        levsef[i], "') + frailty(par, distribution = 'gamma')"
+      )),
+      data = matchpop
       ))
 
-      outforest[i + 1, 2] <- mod$coefficients[1]
-      outforest[i + 1, 3] <- mod$coefficients[1] - global_z05 * se
-      outforest[i + 1, 4] <- mod$coefficients[1] + global_z05 * se
+      out[2, row:(row + 1)] <- c("ref", paste0(
+        fn(mod$conf.int[1, 1], dig = 2),
+        " (", fn(mod$conf.int[1, 3], dig = 2),
+        "-", fn(mod$conf.int[1, 4], dig = 2), "), ",
+        fn(mod$coef[1, "p"], dig = 3, p = TRUE)
+      ))
+
+      outforest[i + 1, 2] <- log(mod$conf.int[1, 1])
+      outforest[i + 1, 3] <- log(mod$conf.int[1, 3])
+      outforest[i + 1, 4] <- log(mod$conf.int[1, 4])
       outforest[i + 1, 5] <- paste0(
-        fn(exp(mod$coefficients[1]), dig = 2),
-        " (", fn(exp(mod$coefficients[1] - global_z05 * se), dig = 2),
-        "-", fn(exp(mod$coefficients[1] + global_z05 * se), dig = 2), ")"
+        fn(mod$conf.int[1, 1], dig = 2),
+        " (", fn(mod$conf.int[1, 3], dig = 2),
+        "-", fn(mod$conf.int[1, 4], dig = 2), ")"
       )
 
       if (i == 1) {
-        pint <- car::Anova(mod, type = "III", test.statistic = "Wald")
+        pint <- car::Anova(mod2, type = "III")
 
         out[2, 9] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
         outforest[1, 6] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
@@ -89,24 +91,19 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
     if (rep) {
       out[2, 2] <- "Adjusted ps matched IRR (95% CI), p-value"
 
-      mod <- summary(mod2 <- lme4::glmer.nb(formula(paste0(event, " ~ ablation * relevel(shf_ef_cat, ref = '", levsef[i], "') + (1 | par) + offset(log(", time, "))")),
-        data = matchpop %>% filter(!!sym(time) > 0)
+      mod <- summary(mod2 <- glm.nb(formula(paste0(
+        event, " ~ ablation * relevel(shf_ef_cat, ref = '",
+        levsef[i], "') + offset(log(", time, "))"
+      )),
+      data = matchpop %>% filter(!!sym(time) > 0)
       ))
 
-      se <- sqrt(vcov(mod)[1])
-
-      out[2, row:(row + 1)] <- c(
-        "ref",
-        paste0(
-          fn(exp(mod$coefficients[2, "Estimate"]), 2),
-          " (",
-          fn(exp(mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]), 2),
-          "-",
-          fn(exp(mod$coefficients[2, "Estimate"] + global_z05 * mod$coefficients[2, "Std. Error"]), 2),
-          "), ",
-          fn(mod$coefficients[2, "Pr(>|z|)"], dig = 3, p = T)
-        )
-      )
+      out[2, row:(row + 1)] <- c("ref", paste0(
+        fn(exp(mod$coefficients[2, "Estimate"]), dig = 2),
+        " (", fn(exp(mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]), dig = 2),
+        "-", fn(exp(mod$coefficients[2, "Estimate"] + global_z05 * mod$coefficients[2, "Std. Error"]), dig = 2), "), ",
+        fn(mod$coefficients[2, "Pr(>|z|)"], dig = 3, p = TRUE)
+      ))
 
       outforest[i + 1, 2] <- mod$coefficients[2, "Estimate"]
       outforest[i + 1, 3] <- mod$coefficients[2, "Estimate"] - global_z05 * mod$coefficients[2, "Std. Error"]
@@ -121,7 +118,7 @@ survefsubfunc <- function(time, event, eventname, rep = FALSE) {
       )
 
       if (i == 1) {
-        pint <- car::Anova(mod2, type = "III", test.statistic = "Chisq")
+        pint <- car::Anova(mod2, type = "III", test.statistic = "Wald")
 
         out[2, 9] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
         outforest[1, 6] <- fn(last(pint[, "Pr(>Chisq)"]), dig = 3, p = TRUE)
@@ -187,11 +184,17 @@ s7 <- survefsubfunc(
   event = "sos_out_hospany",
   eventname = "First hospitalization"
 )
+
+s8 <- survefsubfunc(
+  time = "sos_outtime_hospliverratrauma",
+  event = "sos_out_hospliverratrauma",
+  eventname = "First hospitalization for ra, liver, trauma (falsification)"
+)
 ```
 
 ```{r outtabefsubprint, dependson="outtabefsub", cache=cacheon}
 outall <- rbind(
-  s1$out, s1_2$out, s2$out, s3$out, s3_2$out, s4$out, s5$out, s6$out, s7$out
+  s1$out, s1_2$out, s2$out, s3$out, s3_2$out, s4$out, s5$out, s6$out, s7$out, s8$out
 )
 
 write.xlsx(outall, paste0("./output/tabs/outefsub_", Sys.Date(), ".xlsx"), rowNames = FALSE)
@@ -222,7 +225,7 @@ forestdata <- forestdata %>%
 cextext <- 1
 
 minmy <- floor(exp(min(forestdata$lci, na.rm = T)) * 100) / 100
-# minmy <- 1
+minmy <- 0.1
 maxmy <- ceiling(exp(max(forestdata$uci, na.rm = T)) * 10) / 10
 
 # c(bottom, left, top, right)
@@ -243,23 +246,27 @@ plot(forestdata$loghr, forestdata$order,
   main = NA,
   type = "p",
   pch = 22,
-  bg = c(1, global_kicols[1:3]),
-  col = c(1, global_kicols[1:3]),
+  bg = c(1, global_cols[c(1, 3, 5)]),
+  col = c(1, global_cols[c(1, 3, 5)]),
   xaxs = "i"
 )
 
 for (i in 1:nrow(forestdata)) {
   if (!is.na(forestdata$lci[i])) {
-    coltmp <- if_else(forestdata$Outcome[i] == " HFrEF", 1,
-      if_else(forestdata$Outcome[i] == " HFmrEF", 2, 3)
+    coltmp <- if_else(forestdata$Outcome[i] == "  HFrEF", 1,
+      if_else(forestdata$Outcome[i] == "  HFmrEF", 2, 3)
     )
     matplot(c(forestdata$lci[i], forestdata$uci[i]), c(forestdata$order[i], forestdata$order[i]),
-      type = "l", add = TRUE, col = global_kicols[1:3][coltmp], cex = 1
+      type = "l", add = TRUE, col = global_cols[c(1, 3, 5)][coltmp], cex = 1, lwd = 2
     )
-    ## if lci < 1
-    # if (rev(forestdata$lci)[i] < log(minmy)) {
-    #  arrows(0.01, i, 0, i, col = global_kicols[coltmp], code = 2, length = 0.15)
-    # }
+    # if lci < 0.1
+    if (forestdata$lci[i] < log(minmy)) {
+      arrows(log(minmy) + 0.01, forestdata$order[i], log(minmy),
+        forestdata$order[i],
+        col = global_cols[c(1, 3, 5)][coltmp],
+        code = 2, length = 0.15, lwd = 2
+      )
+    }
   }
 }
 
@@ -314,7 +321,7 @@ axis(1,
 )
 axis(1,
   at = log(1 + 0.2), cex.axis = cextext,
-  labels = "MT", line = 1, tick = FALSE, hadj = 0
+  labels = "No ablation", line = 1, tick = FALSE, hadj = 0
 )
 axis(1,
   at = log(1), cex.axis = cextext,

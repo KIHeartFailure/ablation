@@ -308,6 +308,36 @@ pop <- create_sosvar(
   warnings = FALSE
 )
 
+pop <- create_sosvar(
+  sosdata = patreg %>% filter(sos_source == "sv"),
+  cohortdata = pop,
+  patid = LopNr,
+  indexdate = indexdtm,
+  sosdate = INDATUM,
+  diavar = HDIA,
+  type = "out",
+  name = "hospliverra",
+  diakod = " B18| I85| I864| I982| K70| K710| K711| K71[3-7]| K7[2-4]| K760| K76[2-9]| M05| M06| M123| M07[0-3]| M08| M13| M30| M31[3-6]| M3[2-4]| M350| M351| M353| M45| M46",
+  censdate = censdtm,
+  valsclass = "fac",
+  warnings = FALSE
+)
+
+pop <- create_sosvar(
+  sosdata = patreg %>% filter(sos_source == "sv"),
+  cohortdata = pop,
+  patid = LopNr,
+  indexdate = indexdtm,
+  sosdate = INDATUM,
+  diavar = HDIA,
+  type = "out",
+  name = "hospliverratrauma",
+  diakod = " B18| I85| I864| I982| K70| K710| K711| K71[3-7]| K7[2-4]| K760| K76[2-9]| M05| M06| M123| M07[0-3]| M08| M13| M30| M31[3-6]| M3[2-4]| M350| M351| M353| M45| M46| S| T0| T1[0-4]",
+  censdate = censdtm,
+  valsclass = "fac",
+  warnings = FALSE
+)
+
 # Cause of death ----------------------------------------------------------
 
 pop <- pop %>%
